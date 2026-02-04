@@ -90,10 +90,9 @@ public class DesertmodClient implements ClientModInitializer {
             // работаем только с основной рукой
             if (hand != Hand.MAIN_HAND) return ActionResult.PASS;
 
-            if (!entity.getScoreboardTags().contains(ClientNpcSpawner.CAN_TALK_TAG)) {
+            if (!ClientNpcSpawner.canNpcTalk(entity)) {
                 return ActionResult.PASS;
             }
-
             if (entity instanceof mxnder.desertmod.entity.SimpleNpcEntity) {
                 if (!SIMPLE_NPC_DIALOG.canTalk(entity)) {
                     return ActionResult.PASS;

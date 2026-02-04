@@ -60,7 +60,7 @@ public final class SimpleNpcDialog {
     private final Map<Entity, Integer> npcPhraseTimers = new HashMap<>();
     // КД МЕЖДУ ФРАЗАМИ
     private static final Map<Entity, Integer> npcTalkCooldowns = new HashMap<>();
-    private static final int NPC_TALK_COOLDOWN_TICKS = 40;
+    private static final int NPC_TALK_COOLDOWN_TICKS = 100;
 
     /**
      * Возвращает следующую фразу по очереди.

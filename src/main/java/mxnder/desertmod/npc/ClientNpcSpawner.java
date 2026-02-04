@@ -14,7 +14,7 @@ public final class ClientNpcSpawner {
 
     // Флаг, чтобы спавн был только один раз за сессию
     private static boolean spawned = false;
-    public static final String CAN_TALK_TAG = "desertmod:can_talk";
+    private static final java.util.Map<Entity, Boolean> npcTalkFlags = new java.util.HashMap<>();
 
     public static void OnClientTick(MinecraftClient client) {
         ClientWorld world = client.world;
@@ -47,9 +47,7 @@ public final class ClientNpcSpawner {
             simple.setAnimVariant(entry.animVariant());
         }
 
-        if (entry.canTalk()) {
-            npc.addScoreboardTag(CAN_TALK_TAG);
-        }
+        npcTalkFlags.put(npc, entry.canTalk());
 
         // Клиентские NPC должны быть "декоративными"
         npc.setNoGravity(true);
@@ -60,5 +58,13 @@ public final class ClientNpcSpawner {
         }
 
         world.addEntity(npc);
+    }
+
+    public static boolean canNpcTalk(Entity npc) {
+        if (npc.isRemoved()) {
+            npcTalkFlags.remove(npc);
+            return false;
+        }
+        return npcTalkFlags.getOrDefault(npc, false);
     }
 }
