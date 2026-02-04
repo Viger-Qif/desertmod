@@ -14,6 +14,7 @@ public final class ClientNpcSpawner {
 
     // Флаг, чтобы спавн был только один раз за сессию
     private static boolean spawned = false;
+    public static final String CAN_TALK_TAG = "desertmod:can_talk";
 
     public static void OnClientTick(MinecraftClient client) {
         ClientWorld world = client.world;
@@ -44,6 +45,10 @@ public final class ClientNpcSpawner {
         // Вариант анимации применяется только к SimpleNpcEntity
         if (npc instanceof SimpleNpcEntity simple) {
             simple.setAnimVariant(entry.animVariant());
+        }
+
+        if (entry.canTalk()) {
+            npc.addScoreboardTag(CAN_TALK_TAG);
         }
 
         // Клиентские NPC должны быть "декоративными"

@@ -78,6 +78,7 @@ public class DesertmodClient implements ClientModInitializer {
             }
 
             SIMPLE_NPC_DIALOG.tick();
+            EXAMPLE_NPC_DIALOG.tick();
         });
     }
 
@@ -89,13 +90,23 @@ public class DesertmodClient implements ClientModInitializer {
             // работаем только с основной рукой
             if (hand != Hand.MAIN_HAND) return ActionResult.PASS;
 
+            if (!entity.getScoreboardTags().contains(ClientNpcSpawner.CAN_TALK_TAG)) {
+                return ActionResult.PASS;
+            }
+
             if (entity instanceof mxnder.desertmod.entity.SimpleNpcEntity) {
+                if (!SIMPLE_NPC_DIALOG.canTalk(entity)) {
+                    return ActionResult.PASS;
+                }
                 String phrase = SIMPLE_NPC_DIALOG.getNextPhrase();
                 SIMPLE_NPC_DIALOG.showPhrase(entity, phrase, 60);
                 return ActionResult.PASS;
             }
 
             if (entity instanceof mxnder.desertmod.entity.ExampleNpcEntity) {
+                if (!EXAMPLE_NPC_DIALOG.canTalk(entity)) {
+                    return ActionResult.PASS;
+                }
                 String phrase = EXAMPLE_NPC_DIALOG.getNextPhrase();
                 EXAMPLE_NPC_DIALOG.showPhrase(entity, phrase, 60);
                 return ActionResult.PASS;

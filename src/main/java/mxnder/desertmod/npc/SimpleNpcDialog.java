@@ -88,6 +88,11 @@ public final class SimpleNpcDialog {
         npc.setCustomName(Text.literal(phrase));
         npc.setCustomNameVisible(true);
         npcPhraseTimers.put(npc, ticks);
+        npcTalkCooldowns.put(npc, NPC_TALK_COOLDOWN_TICKS);
+    }
+
+    public boolean canTalk(Entity npc) {
+        return npcTalkCooldowns.getOrDefault(npc, 0) <= 0;
     }
 
     /**
@@ -106,6 +111,20 @@ public final class SimpleNpcDialog {
                 npc.setCustomNameVisible(false);
                 npc.setCustomName(null);
                 iterator.remove();
+            } else {
+                entry.setValue(timeLeft);
+            }
+        }
+
+        Iterator<Map.Entry<Entity, Integer>> cooldownIterator = npcTalkCooldowns.entrySet().iterator();
+
+        while (cooldownIterator.hasNext()) {
+            Map.Entry<Entity, Integer> entry = cooldownIterator.next();
+            Entity npc = entry.getKey();
+            int timeLeft = entry.getValue() - 1;
+
+            if (timeLeft <= 0 || npc.isRemoved()) {
+                cooldownIterator.remove();
             } else {
                 entry.setValue(timeLeft);
             }
