@@ -12,6 +12,7 @@ import net.minecraft.entity.mob.MobEntity;
 @Environment(EnvType.CLIENT)
 public final class ClientNpcSpawner {
 
+    // Флаг, чтобы спавн был только один раз за сессию
     private static boolean spawned = false;
 
     public static void OnClientTick(MinecraftClient client) {
@@ -32,6 +33,7 @@ public final class ClientNpcSpawner {
         Entity npc = entry.type().create(world, SpawnReason.LOAD);
         if (npc == null) return;
 
+        // Позиция и направление взгляда NPC
         npc.refreshPositionAndAngles(
                 entry.x(), entry.y(), entry.z(),
                 entry.yaw(), 0f
@@ -39,10 +41,12 @@ public final class ClientNpcSpawner {
         npc.setHeadYaw(entry.yaw());
         npc.setHeadYaw(entry.yaw());
 
+        // Вариант анимации применяется только к SimpleNpcEntity
         if (npc instanceof SimpleNpcEntity simple) {
             simple.setAnimVariant(entry.animVariant());
         }
 
+        // Клиентские NPC должны быть "декоративными"
         npc.setNoGravity(true);
         npc.setSilent(true);
         npc.setInvulnerable(true);
