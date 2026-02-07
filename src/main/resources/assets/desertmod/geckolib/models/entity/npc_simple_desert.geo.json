@@ -3,7 +3,7 @@
 	"minecraft:geometry": [
 		{
 			"description": {
-				"identifier": "geometry.npc_lamberjack",
+				"identifier": "geometry.npc_simple_desert",
 				"texture_width": 64,
 				"texture_height": 64,
 				"visible_bounds_width": 4,
