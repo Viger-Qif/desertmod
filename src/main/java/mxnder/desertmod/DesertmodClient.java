@@ -98,9 +98,6 @@ public class DesertmodClient implements ClientModInitializer {
             }
 
             if (entity instanceof mxnder.desertmod.entity.ExampleNpcEntity) {
-                if (!EXAMPLE_NPC_DIALOG.canTalk(entity)) {
-                    return ActionResult.PASS;
-                }
                 String phrase = EXAMPLE_NPC_DIALOG.getNextPhrase();
                 EXAMPLE_NPC_DIALOG.showPhrase(entity, phrase, 60);
                 return ActionResult.PASS;
