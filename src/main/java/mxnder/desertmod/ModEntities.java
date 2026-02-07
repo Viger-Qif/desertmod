@@ -15,22 +15,27 @@ import net.minecraft.util.Identifier;
 public class ModEntities {
 
     // Ключ для регистрации типа сущности в реестр
-    public static final RegistryKey<EntityType<?>> NPC_KEY =
+    public static final RegistryKey<EntityType<?>> EXAMPLE_NPC_KEY =
             RegistryKey.of(
                     RegistryKeys.ENTITY_TYPE,
-                    Identifier.of(Desertmod.MOD_ID, "npc")
+                    Identifier.of(Desertmod.MOD_ID, "npc_lamberjack")
             );
-    
+    public static final RegistryKey<EntityType<?>> SIMPLE_NPC_KEY =
+            RegistryKey.of(
+                    RegistryKeys.ENTITY_TYPE,
+                    Identifier.of(Desertmod.MOD_ID, "npc_simple_desert")
+            );
+
     // Основные типы NPC
     public static final EntityType<ExampleNpcEntity> EXAMPLE_NPC = FabricEntityTypeBuilder
             .create(SpawnGroup.MISC, ExampleNpcEntity::new)
             .dimensions(EntityDimensions.fixed(0.6F, 1.8F))
-            .build(NPC_KEY);
+            .build(EXAMPLE_NPC_KEY);
 
     public static final EntityType<SimpleNpcEntity> SIMPLE_NPC = FabricEntityTypeBuilder
             .create(SpawnGroup.MISC, SimpleNpcEntity::new)
             .dimensions(EntityDimensions.fixed(0.6F, 1.8F))
-            .build(NPC_KEY);
+            .build(SIMPLE_NPC_KEY);
 
     // Регистрация сущностей в реестр Fabric/Minecraft
     public static void registerEntities() {
