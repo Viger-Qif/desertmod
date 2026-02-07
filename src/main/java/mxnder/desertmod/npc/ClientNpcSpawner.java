@@ -40,14 +40,12 @@ public final class ClientNpcSpawner {
                 entry.yaw(), 0f
         );
         npc.setHeadYaw(entry.yaw());
-        npc.setHeadYaw(entry.yaw());
 
         // Вариант анимации применяется только к SimpleNpcEntity
         if (npc instanceof SimpleNpcEntity simple) {
             simple.setAnimVariant(entry.animVariant());
         }
 
-        npcTalkFlags.put(npc, entry.canTalk());
 
         // Клиентские NPC должны быть "декоративными"
         npc.setNoGravity(true);
@@ -60,11 +58,4 @@ public final class ClientNpcSpawner {
         world.addEntity(npc);
     }
 
-    public static boolean canNpcTalk(Entity npc) {
-        if (npc.isRemoved()) {
-            npcTalkFlags.remove(npc);
-            return false;
-        }
-        return npcTalkFlags.getOrDefault(npc, false);
-    }
 }

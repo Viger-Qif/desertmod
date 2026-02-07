@@ -58,9 +58,6 @@ public final class SimpleNpcDialog {
 
     // Таймеры показа реплики над NPC
     private final Map<Entity, Integer> npcPhraseTimers = new HashMap<>();
-    // КД МЕЖДУ ФРАЗАМИ
-    private static final Map<Entity, Integer> npcTalkCooldowns = new HashMap<>();
-    private static final int NPC_TALK_COOLDOWN_TICKS = 100;
 
     /**
      * Возвращает следующую фразу по очереди.
@@ -88,11 +85,6 @@ public final class SimpleNpcDialog {
         npc.setCustomName(Text.literal(phrase));
         npc.setCustomNameVisible(true);
         npcPhraseTimers.put(npc, ticks);
-        npcTalkCooldowns.put(npc, NPC_TALK_COOLDOWN_TICKS);
-    }
-
-    public boolean canTalk(Entity npc) {
-        return npcTalkCooldowns.getOrDefault(npc, 0) <= 0;
     }
 
     /**
@@ -100,6 +92,7 @@ public final class SimpleNpcDialog {
      * Этот метод нужно вызывать раз в тик.
      */
     public void tick() {
+
         Iterator<Map.Entry<Entity, Integer>> iterator = npcPhraseTimers.entrySet().iterator();
 
         while (iterator.hasNext()) {
@@ -116,18 +109,5 @@ public final class SimpleNpcDialog {
             }
         }
 
-        Iterator<Map.Entry<Entity, Integer>> cooldownIterator = npcTalkCooldowns.entrySet().iterator();
-
-        while (cooldownIterator.hasNext()) {
-            Map.Entry<Entity, Integer> entry = cooldownIterator.next();
-            Entity npc = entry.getKey();
-            int timeLeft = entry.getValue() - 1;
-
-            if (timeLeft <= 0 || npc.isRemoved()) {
-                cooldownIterator.remove();
-            } else {
-                entry.setValue(timeLeft);
-            }
-        }
     }
 }

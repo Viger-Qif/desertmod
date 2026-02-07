@@ -33,7 +33,7 @@ public class DesertmodClient implements ClientModInitializer {
     public void onInitializeClient() {
 
         registerEntityRenderers(); // регистр рендеров
-        refisterKeybindings(); // регистр кнопки F
+        registerKeybindings(); // регистр кнопки F
         registerNpcSpawning(); // обработчик нпс
         registerClientTicks(); // обработчик кнопки F
         registerNpcInteraction(); // обработчик пкс по нпс
@@ -54,7 +54,7 @@ public class DesertmodClient implements ClientModInitializer {
         );
     }
 
-    private void refisterKeybindings() {
+    private void registerKeybindings() {
         // РЕГИСТРАЦИЯ КЛАВИШИ F
         interactWithNpcKey = KeyBindingHelper.registerKeyBinding(
                 new KeyBinding(
@@ -90,15 +90,10 @@ public class DesertmodClient implements ClientModInitializer {
             // работаем только с основной рукой
             if (hand != Hand.MAIN_HAND) return ActionResult.PASS;
 
-            if (!ClientNpcSpawner.canNpcTalk(entity)) {
-                return ActionResult.PASS;
-            }
+
             if (entity instanceof mxnder.desertmod.entity.SimpleNpcEntity) {
-                if (!SIMPLE_NPC_DIALOG.canTalk(entity)) {
-                    return ActionResult.PASS;
-                }
                 String phrase = SIMPLE_NPC_DIALOG.getNextPhrase();
-                SIMPLE_NPC_DIALOG.showPhrase(entity, phrase, 60);
+                //SIMPLE_NPC_DIALOG.showPhrase(entity, phrase, 60);
                 return ActionResult.PASS;
             }
 

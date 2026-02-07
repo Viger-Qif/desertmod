@@ -16,7 +16,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class SimpleNpcEntity extends PathAwareEntity implements GeoEntity {
 
-    private String animVariant = "hair";
+    private String animVariant = "idle_hair";
 
     public void setAnimVariant(String variant) {
         this.animVariant = variant;
@@ -42,6 +42,7 @@ public class SimpleNpcEntity extends PathAwareEntity implements GeoEntity {
     private static final RawAnimation IDLE_HAIR = RawAnimation.begin().thenLoop("idle_hair");
     private static final RawAnimation IDLE_HAT = RawAnimation.begin().thenLoop("idle_hat");
     private static final RawAnimation LEAN_1_HAIR = RawAnimation.begin().thenLoop("lean_1_hair");
+    private static final RawAnimation TALK_HAIR = RawAnimation.begin().thenLoop("talk_hair");
 
     private PlayState idleAnimController(AnimationTest<SimpleNpcEntity> controller) {
         switch (animVariant)
@@ -55,6 +56,11 @@ public class SimpleNpcEntity extends PathAwareEntity implements GeoEntity {
             case "lean_1_hair":
                 controller.setAndContinue(LEAN_1_HAIR);
                 break;
+            case "talk_hair":
+                controller.setAndContinue(TALK_HAIR);
+                break;
+            default:
+                controller.setAndContinue(IDLE_HAIR);
         }
 
         return PlayState.CONTINUE;

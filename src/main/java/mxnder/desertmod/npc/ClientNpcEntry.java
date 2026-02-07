@@ -8,6 +8,5 @@ public record ClientNpcEntry(
     EntityType<? extends Entity> type,
     double x, double y, double z,
     float yaw,
-    String animVariant,
-    boolean canTalk // может нпс вообще говорить
+    String animVariant
 ) {}
