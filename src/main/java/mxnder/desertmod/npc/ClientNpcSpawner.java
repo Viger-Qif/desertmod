@@ -16,7 +16,7 @@ import java.util.List;
 @Environment(EnvType.CLIENT)
 public final class ClientNpcSpawner {
 
-    // Флаг, чтобы спавн был только один раз за сессию
+    // Флаг, чтобы спавн был только один раз за вход в мир
     private static boolean spawned = false;
     private static boolean npcsEnabled = true;
 
@@ -25,9 +25,17 @@ public final class ClientNpcSpawner {
 
     public static void OnClientTick(MinecraftClient client) {
         ClientWorld world = client.world;
-        if (world == null || spawned) return;
 
-        if (npcsEnabled == true) {
+        // Если мира нет — сбрасываем флаг (игрок вышел в меню или сменил мир)
+        if (world == null) {
+            spawned = false;
+            return;
+        }
+
+        // Если уже заспавнили в этом мире — ничего не делаем
+        if (spawned) return;
+
+        if (npcsEnabled) {
             spawnAlongTheRiver(world);
             spawned = true;
         }
