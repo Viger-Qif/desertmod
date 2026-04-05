@@ -30,11 +30,11 @@ public class ExampleNpcRenderer<R extends LivingEntityRenderState & GeoRenderSta
 
     // Рендер только если NPC включены в конфиге
     @Override
-    public void render(R state, MatrixStack modelMatrix, CameraRenderState cameraRenderState, float partialTick) {
+    public void render(R state, MatrixStack modelMatrix, Object queue, float partialTick) {
         if (!MyConfig.HANDLER.instance().enableNPC) {
             return;
         }
-        super.render(state, modelMatrix, cameraRenderState, partialTick);
+        super.render(state, modelMatrix, queue, partialTick);
     }
 }
 

@@ -3,36 +3,55 @@
 *.class
 *.o
 *.obj
+*.exe
+*.dll
+*.so
+*.a
 *.out
-build/
-target/
 
 # Dependencies
-.gradle/
-node_modules/
-venv/
-.venv/
-__pycache__/
+lib/
+libs/
+dependency/
+dependencies/
+
+# Build directories (common in Java projects)
+build/
+target/
+out/
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*.swo
 
 # Logs and temp files
 *.log
 *.tmp
-*.swp
+*.temp
 
 # Environment
 .env
 .env.local
 *.env.*
 
-# Editors
-.vscode/
-.idea/
+# Coverage reports
+coverage/
+htmlcov/
+*.coverage
+
+# Package manager caches
+.gradle/
+.mypy_cache/
+.pytest_cache/
+__pycache__/
+*.egg-info/
 
 # System files
 .DS_Store
 Thumbs.db
-
-# Gradle wrapper (if not needed in version control)
-gradlew
-gradlew.bat
 ```
