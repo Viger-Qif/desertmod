@@ -14,28 +14,10 @@ import net.minecraft.util.Identifier;
 
 import java.awt.*;
 
-/**
- * Класс конфигурации мода Desertmod.
- * <p>
- * Предоставляет настройку параметров мода через библиотеку YACL (YetAnotherConfigLib).
- * Конфигурация сохраняется в файле {@code config/desertmod.json5} в формате JSON5.
- * </p>
- * <p>
- * Текущие настройки:
- * <ul>
- *   <li>enableNPC - включение/выключение спавна NPC</li>
- * </ul>
- * </p>
- *
- * @see ConfigClassHandler обработчик конфигурации YACL v2
- * @see YetAnotherConfigLib библиотека для создания экранов настроек
- */
+// Конфигурация мода (настройки через YACL)
 public class MyConfig {
 
-    /**
-     * Обработчик конфигурации, управляющий загрузкой и сохранением настроек.
-     * Использует сериализацию Gson с поддержкой формата JSON5.
-     */
+    // Обработчик конфига: файл desertmod.json5 в папке config
     public static ConfigClassHandler<MyConfig> HANDLER = ConfigClassHandler.createBuilder(MyConfig.class)
             .id(Identifier.of("desertmod", "config"))
             .serializer(config -> GsonConfigSerializerBuilder.create(config)
@@ -44,45 +26,27 @@ public class MyConfig {
                     .build())
             .build();
 
-    /**
-     * Настройка включения/выключения спавна NPC.
-     * <p>
-     * По умолчанию NPC включены ({@code true}). При значении {@code false}
-     * NPC не будут появляться при загрузке мира.
-     * </p>
-     */
+    // Включение/выключение NPC (по умолчанию true)
     @SerialEntry
     public boolean enableNPC = true;
 
-    /**
-     * Создаёт и настраивает экран конфигурации YACL.
-     * <p>
-     * Экран содержит:
-     * <ul>
-     *   <li>Заголовок "🏜️ Desert Mod"</li>
-     *   <li>Вкладку "General" с настройками</li>
-     *   <li>Опцию включения NPC с описанием</li>
-     * </ul>
-     * </p>
-     *
-     * @return настроенный экземпляр YACL для отображения экрана настроек
-     */
+    // Создание GUI конфига
     public YetAnotherConfigLib createYACL() {
         return YetAnotherConfigLib.createBuilder()
-                .title(Text.literal("\uD83C\uDFDC\uFE0F Desert Mod")) // Заголовок окна (с эмодзи пустыни)
+                .title(Text.literal("\uD83C\uDFDC\uFE0F Desert Mod"))
                 .category(ConfigCategory.createBuilder()
-                        .name(Text.literal("General")) // Название вкладки
+                        .name(Text.literal("General"))
                         .tooltip(Text.literal("Основные настройки мода"))
                         .option(Option.<Boolean>createBuilder()
                                 .name(Text.literal("Включить NPC"))
                                 .description(OptionDescription.of(Text.literal("Разрешает спавн NPC при загрузке мира")))
-                                .binding(true,  // Значение по умолчанию
-                                        () -> HANDLER.instance().enableNPC,  // Получение текущего значения
-                                        newVal -> HANDLER.instance().enableNPC = newVal)  // Установка нового значения
-                                .controller(TickBoxControllerBuilder::create)  // Тип контроллера: галочка (tick box)
+                                .binding(true,
+                                        () -> HANDLER.instance().enableNPC,
+                                        newVal -> HANDLER.instance().enableNPC = newVal)
+                                .controller(TickBoxControllerBuilder::create)
                                 .build())
                         .build())
-                .save(() -> HANDLER.save()) // Действие при нажатии кнопки "Apply": сохранение в файл
+                .save(() -> HANDLER.save())
                 .build();
     }
 }

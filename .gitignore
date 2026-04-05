@@ -1,37 +1,38 @@
 ```
-# Compiled Java files
+# Compiled and build artifacts
 *.class
-*.jar
-*.war
-*.ear
-
-# Build system directories
-target/
+*.o
+*.obj
+*.out
 build/
-dist/
+target/
 
 # Dependencies
-lib/
-libs/
-
-# IDE files
 .gradle/
-.idea/
-.vscode/
+node_modules/
+venv/
+.venv/
+__pycache__/
 
-# Logs
+# Logs and temp files
 *.log
+*.tmp
+*.swp
 
 # Environment
 .env
 .env.local
 *.env.*
 
-# OS generated files
+# Editors
+.vscode/
+.idea/
+
+# System files
 .DS_Store
 Thumbs.db
 
-# Temporary files
-*.tmp
-*.temp
+# Gradle wrapper (if not needed in version control)
+gradlew
+gradlew.bat
 ```

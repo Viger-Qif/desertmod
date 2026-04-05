@@ -3,25 +3,10 @@ package mxnder.desertmod.npc;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Класс управления диалогами для NPC-лесоруба (Example NPC).
- * <p>
- * Содержит фразы занятого рабочего, который не хочет отвлекаться от работы.
- * Фразы выдаются в случайном порядке при взаимодействии с игроком.
- * </p>
- * <p>
- * Наследуется от {@link BaseNpcDialog}, который предоставляет базовую логику
- * для управления фразами и их отображения над головой NPC.
- * </p>
- *
- * @see BaseNpcDialog
- */
+// Диалоги примера NPC (список фраз)
 public final class ExampleNpcDialog extends BaseNpcDialog {
 
-    /**
-     * Список реплик для NPC-лесоруба.
-     * Включает фразы о том, что персонаж занят работой и не хочет разговаривать.
-     */
+    // Фразы для случайного выбора (изменить текст)
     private static final List<String> EXAMPLE_NPC_PHRASES = Arrays.asList(
             "Не мешай, я занят",
             "Не отвлекай от работы",
@@ -35,10 +20,6 @@ public final class ExampleNpcDialog extends BaseNpcDialog {
             "Руки заняты делом"
     );
 
-    /**
-     * Конструктор диалога для NPC-лесоруба.
-     * Передаёт список фраз в базовый класс для обработки.
-     */
     public ExampleNpcDialog() {
         super(EXAMPLE_NPC_PHRASES);
     }
