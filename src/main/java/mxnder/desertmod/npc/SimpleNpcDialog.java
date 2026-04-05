@@ -1,25 +1,34 @@
 package mxnder.desertmod.npc;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.text.Text;
-
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Управляет фразами для простых NPC:
- * - хранит список реплик
- * - раздаёт их по очереди в случайном порядке
- * - показывает реплику над головой NPC на ограниченное время
+ * Класс управления диалогами для простых NPC (например, жителей пустыни).
+ * <p>
+ * Содержит тематические фразы о жизни в пустыне, богах Древнего Египта,
+ * разливе Нила и повседневной жизни. Фразы выдаются в случайном порядке.
+ * </p>
+ * <p>
+ * Наследуется от {@link BaseNpcDialog}, который предоставляет базовую логику
+ * для управления фразами и их отображения над головой NPC.
+ * </p>
+ *
+ * @see BaseNpcDialog
  */
-public final class SimpleNpcDialog {
+public final class SimpleNpcDialog extends BaseNpcDialog {
 
-    // Базовый список реплик. Он неизменяемый и используется как источник.
+    /**
+     * Список реплик для простого NPC.
+     * Включает фразы о:
+     * <ul>
+     *   <li>Богах Древнего Египта (Амон-Ра, Исида, Хапи)</li>
+     *   <li>Жизни в пустыне и засухе</li>
+     *   <li>Разливе Нила</li>
+     *   <li>Пирамидах и храмах</li>
+     *   <li>Взаимодействии с игроком</li>
+     * </ul>
+     */
     private static final List<String> SIMPLE_NPC_PHRASES = Arrays.asList(
             "Пески шепчут что-то неладное",
             "Фараон строит новую пирамиду",
@@ -47,67 +56,15 @@ public final class SimpleNpcDialog {
             "Пески более жестоки, чем кажется",
             "Что ищешь здесь, незнакомец?",
             "День выдался тяжёлым",
-            "Надо успеть все дла до заката",
+            "Надо успеть все дела до заката",
             "Пески не любят беспечных"
     );
 
-    // Перемешанный список (хранит текущий порядок фраз)
-    private final List<String> shuffledSimplePhrases = new ArrayList<>(SIMPLE_NPC_PHRASES);
-    // Индекс текущей фразы (какую фразу сейчас показать)
-    private int simpleNpcIndex = 0;
-
-    // Таймеры показа реплики над NPC
-    private final Map<Entity, Integer> npcPhraseTimers = new HashMap<>();
-
     /**
-     * Возвращает следующую фразу по очереди.
-     * Когда очередь заканчивается, список перемешивается заново.
+     * Конструктор диалога для простого NPC.
+     * Передаёт список фраз в базовый класс для обработки.
      */
-    public String getNextPhrase() {
-        if (simpleNpcIndex == 0) {
-            Collections.shuffle(shuffledSimplePhrases);
-        }
-
-        String phrase = shuffledSimplePhrases.get(simpleNpcIndex);
-        simpleNpcIndex++;
-
-        if (simpleNpcIndex >= shuffledSimplePhrases.size()) {
-            simpleNpcIndex = 0;
-        }
-
-        return phrase;
-    }
-
-    /**
-     * Показывает фразу над NPC на указанное число тиков.
-     */
-    public void showPhrase(Entity npc, String phrase, int ticks) {
-        npc.setCustomName(Text.literal(phrase));
-        npc.setCustomNameVisible(true);
-        npcPhraseTimers.put(npc, ticks);
-    }
-
-    /**
-     * Обновляет таймеры и скрывает фразы, когда время истекает.
-     * Этот метод нужно вызывать раз в тик.
-     */
-    public void tick() {
-
-        Iterator<Map.Entry<Entity, Integer>> iterator = npcPhraseTimers.entrySet().iterator();
-
-        while (iterator.hasNext()) {
-            Map.Entry<Entity, Integer> entry = iterator.next();
-            Entity npc = entry.getKey();
-            int timeLeft = entry.getValue() - 1;
-
-            if (timeLeft <= 0 || npc.isRemoved()) {
-                npc.setCustomNameVisible(false);
-                npc.setCustomName(null);
-                iterator.remove();
-            } else {
-                entry.setValue(timeLeft);
-            }
-        }
-
+    public SimpleNpcDialog() {
+        super(SIMPLE_NPC_PHRASES);
     }
 }
