@@ -8,31 +8,43 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.MobEntity;
+import org.jspecify.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Environment(EnvType.CLIENT)
 public final class ClientNpcSpawner {
 
     // Флаг, чтобы спавн был только один раз за сессию
     private static boolean spawned = false;
-    private static final java.util.Map<Entity, Boolean> npcTalkFlags = new java.util.HashMap<>();
+    private static boolean npcsEnabled = true;
+
+    // Храним ссылки на всех нпс, чтобы управлять ими
+    //private static final List<Entity> spawnedNpcs = new ArrayList<>();
 
     public static void OnClientTick(MinecraftClient client) {
         ClientWorld world = client.world;
         if (world == null || spawned) return;
 
-        spawnAlongTheRiver(world);
-        spawned = true;
+        if (npcsEnabled == true) {
+            spawnAlongTheRiver(world);
+            spawned = true;
+        }
+
     }
 
     private static void spawnAlongTheRiver(ClientWorld world) {
         for (ClientNpcEntry entry : AlongTheRiverNpcList.NPCS) {
-            spawnNpc(world, entry);
+            Entity npc = spawnNpc(world, entry);
+            //if (npc != null) spawnedNpcs.add(npc); // Сохраняем ссылку
         }
     }
 
-    private static void spawnNpc(ClientWorld world, ClientNpcEntry entry) {
+    @Nullable
+    private static Entity spawnNpc(ClientWorld world, ClientNpcEntry entry) {
         Entity npc = entry.type().create(world, SpawnReason.LOAD);
-        if (npc == null) return;
+        if (npc == null) return null;
 
         // Позиция и направление взгляда NPC
         npc.refreshPositionAndAngles(
@@ -56,6 +68,7 @@ public final class ClientNpcSpawner {
         }
 
         world.addEntity(npc);
+        return npc;
     }
 
 }

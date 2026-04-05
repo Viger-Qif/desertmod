@@ -1,5 +1,8 @@
 package mxnder.desertmod;
 
+import dev.isxander.yacl3.api.Option;
+import dev.isxander.yacl3.api.OptionDescription;
+import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
 import mxnder.desertmod.npc.ClientNpcSpawner;
 import mxnder.desertmod.npc.ExampleNpcDialog;
 import mxnder.desertmod.npc.SimpleNpcDialog;
@@ -19,6 +22,8 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import org.lwjgl.glfw.GLFW;
 
+import java.awt.*;
+
 @Environment(EnvType.CLIENT)
 public class DesertmodClient implements ClientModInitializer {
 
@@ -37,6 +42,7 @@ public class DesertmodClient implements ClientModInitializer {
         registerNpcSpawning(); // обработчик нпс
         registerClientTicks(); // обработчик кнопки F
         registerNpcInteraction(); // обработчик пкс по нпс
+        MyConfig.HANDLER.load();
 
     }
 
@@ -75,6 +81,10 @@ public class DesertmodClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (interactWithNpcKey.wasPressed()) {
                 client.player.sendMessage(Text.literal("ты тыкнул кнопку взаимодействия"), false);
+
+                var yacl = new MyConfig().createYACL();
+                client.setScreen(yacl.generateScreen(client.currentScreen));
+
             }
 
             SIMPLE_NPC_DIALOG.tick();
@@ -93,7 +103,7 @@ public class DesertmodClient implements ClientModInitializer {
 
             if (entity instanceof mxnder.desertmod.entity.SimpleNpcEntity) {
                 String phrase = SIMPLE_NPC_DIALOG.getNextPhrase();
-                //SIMPLE_NPC_DIALOG.showPhrase(entity, phrase, 60);
+                SIMPLE_NPC_DIALOG.showPhrase(entity, phrase, 60);
                 return ActionResult.PASS;
             }
 

@@ -11,16 +11,13 @@ base {
 }
 
 repositories {
-	exclusiveContent {
-		forRepository {
-			maven {
-				name = 'GeckoLib'
-				url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
-			}
-		}
-		filter {
-			includeGroup('software.bernie.geckolib')
-		}
+	maven {
+		name = 'GeckoLib'
+		url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+	}
+	maven {
+		name 'Xander Maven'
+		url 'https://maven.isxander.dev/releases'
 	}
 }
 
@@ -38,8 +35,10 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-rendering-v1:${fabric_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-rendering-v1:${fabric_api_version}"
 	modImplementation "software.bernie.geckolib:geckolib-fabric-${minecraft_version}:${geckolib_version}"
+
+	modImplementation "dev.isxander:yet-another-config-lib:${project.yacl_version}"
 }
 
 processResources {

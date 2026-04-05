@@ -43,6 +43,7 @@ public class SimpleNpcEntity extends PathAwareEntity implements GeoEntity {
     private static final RawAnimation IDLE_HAT = RawAnimation.begin().thenLoop("idle_hat");
     private static final RawAnimation LEAN_1_HAIR = RawAnimation.begin().thenLoop("lean_1_hair");
     private static final RawAnimation TALK_HAIR = RawAnimation.begin().thenLoop("talk_hair");
+    private static final RawAnimation SIT_1 = RawAnimation.begin().thenLoop("sit_1");
 
     private PlayState idleAnimController(AnimationTest<SimpleNpcEntity> controller) {
         switch (animVariant)
@@ -58,6 +59,9 @@ public class SimpleNpcEntity extends PathAwareEntity implements GeoEntity {
                 break;
             case "talk_hair":
                 controller.setAndContinue(TALK_HAIR);
+                break;
+            case "sit_1":
+                controller.setAndContinue(SIT_1);
                 break;
             default:
                 controller.setAndContinue(IDLE_HAIR);

@@ -24,5 +24,6 @@ public final class AlongTheRiverNpcList {
             new ClientNpcEntry(ModEntities.SIMPLE_NPC,  5378.5, 64, -3303.5, 100f, "talk_hair"),
             new ClientNpcEntry(ModEntities.SIMPLE_NPC,  5375.5, 64, -3304.5, 280f, "talk_hair"),
             new ClientNpcEntry(ModEntities.SIMPLE_NPC,  5375.5, 64, -3302.9, 260f, "idle_hat")
+            //new ClientNpcEntry(ModEntities.SIMPLE_NPC, 5394, 64, -3276, 180f, "sit_1")
     );
 }
