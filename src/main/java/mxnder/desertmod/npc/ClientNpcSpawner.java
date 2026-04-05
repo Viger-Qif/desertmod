@@ -21,7 +21,27 @@ public final class ClientNpcSpawner {
     private static boolean npcsEnabled = true;
 
     // Храним ссылки на всех нпс, чтобы управлять ими
-    //private static final List<Entity> spawnedNpcs = new ArrayList<>();
+    private static final List<Entity> spawnedNpcs = new ArrayList<>();
+
+    public static void setNpcsEnabled(boolean enabled) {
+        npcsEnabled = enabled;
+
+        // Если отключаем - удаляем всех заспавленных NPC
+        if (!enabled) {
+            ClientWorld world = MinecraftClient.getInstance().world;
+            if (world != null) {
+                for (Entity npc : spawnedNpcs) {
+                    world.removeEntity(npc.getId(), Entity.RemovalReason.DISCARDED);
+                }
+            }
+            spawnedNpcs.clear();
+            spawned = false; // Разрешаем повторный спавн при включении
+        }
+    }
+
+    public static boolean isNpcsEnabled() {
+        return npcsEnabled;
+    }
 
     public static void OnClientTick(MinecraftClient client) {
         ClientWorld world = client.world;
@@ -45,7 +65,7 @@ public final class ClientNpcSpawner {
     private static void spawnAlongTheRiver(ClientWorld world) {
         for (ClientNpcEntry entry : AlongTheRiverNpcList.NPCS) {
             Entity npc = spawnNpc(world, entry);
-            //if (npc != null) spawnedNpcs.add(npc); // Сохраняем ссылку
+            if (npc != null) spawnedNpcs.add(npc); // Сохраняем ссылку
         }
     }
 

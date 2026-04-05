@@ -8,6 +8,7 @@ import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
 import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;
 import dev.isxander.yacl3.config.v2.api.SerialEntry;
 import dev.isxander.yacl3.config.v2.api.serializer.GsonConfigSerializerBuilder;
+import mxnder.desertmod.npc.ClientNpcSpawner;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -37,11 +38,14 @@ public class MyConfig {
                         .name(Text.literal("General")) // Название вкладки
                         .tooltip(Text.literal("Подсказка гайс"))
                         .option(Option.<Boolean>createBuilder()
-                                .name(Text.literal("Пример названия"))
-                                .description(OptionDescription.of(Text.literal("Пример подсказки")))
+                                .name(Text.literal("Включить NPC"))
+                                .description(OptionDescription.of(Text.literal("Отображать всех NPC в мире")))
                                 .binding(true,
                                         () -> HANDLER.instance().enableNPC,
-                                        newVal -> HANDLER.instance().enableNPC = newVal)
+                                        newVal -> {
+                                            HANDLER.instance().enableNPC = newVal;
+                                            ClientNpcSpawner.setNpcsEnabled(newVal);
+                                        })
                                 .controller(TickBoxControllerBuilder::create)
                                 .build())
                         .build())
