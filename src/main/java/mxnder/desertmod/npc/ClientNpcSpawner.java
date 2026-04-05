@@ -1,5 +1,6 @@
 package mxnder.desertmod.npc;
 
+import mxnder.desertmod.MyConfig;
 import mxnder.desertmod.entity.SimpleNpcEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -18,7 +19,11 @@ public final class ClientNpcSpawner {
 
     // Флаг, чтобы спавн был только один раз за вход в мир
     private static boolean spawned = false;
-    private static boolean npcsEnabled = true;
+    private static boolean npcsEnabled;
+
+    public static void syncFromConfig() {
+        npcsEnabled = MyConfig.HANDLER.instance().enableNPC;
+    }
 
     // Храним ссылки на всех нпс, чтобы управлять ими
     private static final List<Entity> spawnedNpcs = new ArrayList<>();
