@@ -36,7 +36,8 @@ public class DesertmodClient implements ClientModInitializer {
         registerKeybindings(); // регистр кнопки F
         registerNpcSpawning(); // обработчик нпс
         registerClientTicks(); // обработчик кнопки F
-        registerNpcInteraction(); // обработчик пкс по нпс
+        registerNpcInteraction(); // обработчик пкм по нпс
+        registerItemFrameInteraction(); // обработчик пкм по рамке с предметом
         MyConfig.HANDLER.load();
 
         ClientNpcSpawner.syncFromConfig();
@@ -112,5 +113,9 @@ public class DesertmodClient implements ClientModInitializer {
 
             return ActionResult.PASS;
         }));
+    }
+
+    private void registerItemFrameInteraction() {
+        ItemFrameInteractionHandler.register();
     }
 }
