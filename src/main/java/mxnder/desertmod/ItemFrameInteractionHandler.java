@@ -1,18 +1,30 @@
 package mxnder.desertmod;
 
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.world.World;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ItemFrameInteractionHandler {
 
-    // ЗАМЕНИТЕ ЭТО НАЗВАНИЕ НА ТО, КОТОРОЕ ВАМ НУЖНО (точно как в игре, с учетом регистра и форматирования)
-    private static final String TARGET_ITEM_NAME = "Древний меч";
+    // Карта: название предмета -> сообщение для чата
+    // Добавьте сюда все нужные названия предметов и соответствующие сообщения
+    private static final Map<String, String> ITEM_MESSAGES = new HashMap<>();
+
+    static {
+        ITEM_MESSAGES.put("grassik", "Эта трава не из полей и не из реки.\n" +
+                "Её выращивают в глубине, где свет не нужен — только тишина и влага.");
+        ITEM_MESSAGES.put("kaplya", "Где вода стекает по камню — рождается зелень.\\n\" +\n" +
+                "                \"Это не роса. Это дыхание подземного сада.\"");
+        ITEM_MESSAGES.put("kaplyi", "Три капли на стене — знак, что влага здесь не случайна.\n" +
+                "Мох растёт в тени, но его корни пьют из источника храма.");
+        // Добавьте другие предметы по аналогии:
+        // ITEM_MESSAGES.put("Название предмета", "Ваше сообщение в чат");
+    }
 
     public static void register() {
         UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
@@ -25,10 +37,12 @@ public class ItemFrameInteractionHandler {
                     // Получаем имя предмета (транслированное название)
                     String itemName = stack.getName().getString();
 
-                    // Проверяем совпадение названия
-                    if (itemName.equals(TARGET_ITEM_NAME)) {
+                    // Проверяем, есть ли сообщение для этого предмета
+                    String message = ITEM_MESSAGES.get(itemName);
+
+                    if (message != null) {
                         // Отправляем сообщение в чат
-                        player.sendMessage(Text.literal("Вы перехватили ПКМ по рамке с предметом: " + itemName), false);
+                        player.sendMessage(Text.literal(message), false);
 
                         // Возвращаем SUCCESS, чтобы предотвратить стандартное действие (например, поворот предмета),
                         // если вы хотите, чтобы действие все же происходило, верните PASS
