@@ -16,18 +16,20 @@ public class ItemFrameInteractionHandler {
     private static final Map<String, String> ITEM_MESSAGES = new HashMap<>();
 
     static {
-        ITEM_MESSAGES.put("grassik", "Эта трава не из полей и не из реки.\n" +
-                "Её выращивают в глубине, где свет не нужен — только тишина и влага.");
-        ITEM_MESSAGES.put("kaplya", "Где вода стекает по камню — рождается зелень.\\n\" +\n" +
-                "                \"Это не роса. Это дыхание подземного сада.\"");
-        ITEM_MESSAGES.put("kaplyi", "Три капли на стене — знак, что влага здесь не случайна.\n" +
-                "Мох растёт в тени, но его корни пьют из источника храма.");
+        ITEM_MESSAGES.put("grassik", "Эта трава не из полей и не из реки. Её выращивают в глубине, где свет не нужен — только тишина и влага.");
+        ITEM_MESSAGES.put("kaplya", "Где вода стекает по камню — рождается зелень.Это не роса. Это дыхание подземного сада.");
+        ITEM_MESSAGES.put("kaplyi", "Три капли на стене — знак, что влага здесь не случайна. Мох растёт в тени, но его корни пьют из источника храма.");
         // Добавьте другие предметы по аналогии:
         // ITEM_MESSAGES.put("Название предмета", "Ваше сообщение в чат");
     }
 
     public static void register() {
         UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
+            // Работаем только на клиенте
+            if (!world.isClient()) {
+                return ActionResult.PASS;
+            }
+
             // Проверяем, является ли сущность рамкой для предметов
             if (entity instanceof ItemFrameEntity itemFrame) {
                 // Получаем предмет в рамке
