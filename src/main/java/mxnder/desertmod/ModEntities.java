@@ -12,9 +12,12 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.util.Identifier;
 
+// ПРИ ДОБАВЛЕНИИ НОВОГО ЭНТИТИ НУЖНО ДОБАВИТЬ ТРИ ВЕЩИ: КЛЮЧ, ПЕРЕМЕННУЮ ЭНТИТИ И РЕГИСТРАЦИЮ
+
 public class ModEntities {
 
     // Ключ для регистрации типа сущности в реестр
+    // На каждую новую сущность (нпс) нужен новый ключ
     public static final RegistryKey<EntityType<?>> EXAMPLE_NPC_KEY =
             RegistryKey.of(
                     RegistryKeys.ENTITY_TYPE,

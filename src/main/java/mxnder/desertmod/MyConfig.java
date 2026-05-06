@@ -15,10 +15,12 @@ import net.minecraft.util.Identifier;
 
 import java.awt.*;
 
+//  ОКНО НАСТРОЙКИ МОДА (ЗАВИСИМОСТЬ С БИБЛИОТЕКОЙ YACL
+
 public class MyConfig {
 
 
-    // ОБРАБОТЧИК
+    // ОБРАБОТЧИК (просто надо)
     public static ConfigClassHandler<MyConfig> HANDLER = ConfigClassHandler.createBuilder(MyConfig.class)
             .id(Identifier.of("desertmod", "config"))
             .serializer(config -> GsonConfigSerializerBuilder.create(config)
@@ -29,14 +31,15 @@ public class MyConfig {
 
     // Поле настройки (обязательно все переменные public)
     @SerialEntry
-    public boolean enableNPC = true;
+    // Переменные для настройки
+    public boolean enableNPC = true; // отображение всех нпс
 
     public YetAnotherConfigLib createYACL() {
         return YetAnotherConfigLib.createBuilder()
                 .title(Text.literal("\uD83C\uDFDC\uFE0F Desert Mod")) // Заголовок окна
                 .category(ConfigCategory.createBuilder()
                         .name(Text.literal("General")) // Название вкладки
-                        .tooltip(Text.literal("Подсказка гайс"))
+                        .tooltip(Text.literal("Подсказка гайс")) // Подсказка
                         .option(Option.<Boolean>createBuilder()
                                 .name(Text.literal("Включить NPC"))
                                 .description(OptionDescription.of(Text.literal("Отображать всех NPC в мире")))

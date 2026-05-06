@@ -1,6 +1,7 @@
 package mxnder.desertmod;
 
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
@@ -11,14 +12,13 @@ import java.util.Map;
 
 public class ItemFrameInteractionHandler {
 
-    // Карта: название предмета -> сообщение для чата
-    // Добавьте сюда все нужные названия предметов и соответствующие сообщения
+    // название предмета -> сообщение для чата
     private static final Map<String, String> ITEM_MESSAGES = new HashMap<>();
 
     static {
-        ITEM_MESSAGES.put("grassik", "Эта трава не из полей и не из реки. Её выращивают в глубине, где свет не нужен — только тишина и влага.");
-        ITEM_MESSAGES.put("kaplya", "Где вода стекает по камню — рождается зелень. Это не роса. Это дыхание подземного сада.");
-        ITEM_MESSAGES.put("kaplyi", "Три капли на стене — знак, что влага здесь не случайна. Мох растёт в тени, но его корни пьют из Великого Нила.");
+        ITEM_MESSAGES.put("grassik", "Эта трава не из полей и не из реки. Её выращивают в глубине, где нужен не свет, а только тишина и влага.");
+        ITEM_MESSAGES.put("kaplya", "Зелень рождается там, где вода стекает по камню. Здесь можно почувствовать дыхание подземного сада.");
+        ITEM_MESSAGES.put("kaplyi", "Три капли означают, что влага здесь не случайна. Рядом в тени растёт мох, чьи корни пьют из Великого Нила.");
         // Добавьте другие предметы по аналогии:
         // ITEM_MESSAGES.put("Название предмета", "Ваше сообщение в чат");
     }
@@ -50,9 +50,22 @@ public class ItemFrameInteractionHandler {
                         // если вы хотите, чтобы действие все же происходило, верните PASS
                         return ActionResult.SUCCESS;
                     }
+
+                    // Особая логика для предмета "papirus"
+                    if ("papirus".equals(itemName)) {
+                        // Останавливаем вращение предмета в рамке
+                        itemFrame.setInvisible(false); // предмет остаётся видимым
+
+                        // Открываем экран с изображением папируса
+                        MinecraftClient.getInstance().setScreen(new mxnder.desertmod.screen.PapirusScreen());
+
+                        // Возвращаем SUCCESS, чтобы предотвратить стандартное вращение
+                        return ActionResult.SUCCESS;
+                    }
                 }
             }
             return ActionResult.PASS;
+
         });
     }
 }

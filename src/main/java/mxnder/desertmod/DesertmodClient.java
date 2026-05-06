@@ -19,6 +19,8 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import org.lwjgl.glfw.GLFW;
 
+// ОСНОВНОЙ ФАЙЛ ДЛЯ РАБОТЫ С КЛИЕНТОМ
+
 @Environment(EnvType.CLIENT)
 public class DesertmodClient implements ClientModInitializer {
 
@@ -38,7 +40,8 @@ public class DesertmodClient implements ClientModInitializer {
         registerClientTicks(); // обработчик кнопки F
         registerNpcInteraction(); // обработчик пкм по нпс
         registerItemFrameInteraction(); // обработчик пкм по рамке с предметом
-        MyConfig.HANDLER.load();
+        MyConfig.HANDLER.load(); // загрузка конфига (окна настроек)
+        ItemFrameInteractionHandler.register();
 
         ClientNpcSpawner.syncFromConfig();
 
