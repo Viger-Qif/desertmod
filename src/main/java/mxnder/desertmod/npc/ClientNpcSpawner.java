@@ -11,6 +11,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.MobEntity;
 import org.jspecify.annotations.Nullable;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,8 +78,6 @@ public final class ClientNpcSpawner {
     }
 
     @Nullable
-    //private static Entity spawnNpc(ClientWorld world, ClientNpcEntry entry) {
-        //Entity npc = entry.type().create(world, SpawnReason.LOAD);
     private static Entity spawnNpc(ClientWorld world, EntityType<? extends Entity> type,
                                    double x, double y, double z, float yaw, String animVariant) {
         if (type == null) return null;
@@ -109,6 +108,64 @@ public final class ClientNpcSpawner {
     }
 
     /**
+     * Мгновенно обновляет всех НПС в мире.
+     * Вызывается после изменений в конфиге.
+     */
+    public static void refreshAllNpcs() {
+        var client = MinecraftClient.getInstance();
+        if (client.world == null || client.player == null) return;
+
+        ClientWorld world = client.world;
+        var player = client.player;
+
+        // ✅ Удаляем всех НПС
+        for (Entity npc : spawnedNpcs) {
+            if (npc != null) {
+                npc.discard();
+            }
+        }
+        spawnedNpcs.clear();
+
+        // ✅ Спавним заново
+        var npcs = NpcDataManager.loadNpcs();
+        int radius = MyConfig.HANDLER.instance().npcRenderRadius;
+
+        for (NpcEntry npcData : npcs) {
+            // ✅ Получаем координаты игрока ОТДЕЛЬНО
+            double playerX = player.getX();
+            double playerY = player.getY();
+            double playerZ = player.getZ();
+
+            // ✅ Считаем расстояние
+            double dx = npcData.x() - playerX;
+            double dy = npcData.y() - playerY;
+            double dz = npcData.z() - playerZ;
+            double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+            if (dist <= radius) {
+                EntityType<? extends Entity> type = npcData.getEntityType();
+
+                if (type != null) {
+                    Entity npc = spawnNpc(
+                            world,
+                            type,
+                            npcData.x(),
+                            npcData.y(),
+                            npcData.z(),
+                            npcData.yaw(),
+                            npcData.animVariant()
+                    );
+
+                    if (npc != null) {
+                        spawnedNpcs.add(npc);
+                    }
+                }
+            }
+        }
+
+    }
+
+    /**
      * Удаляет всех заспавненных NPC и очищает список.
      * Используется при перезагрузке конфига.
      */
@@ -121,4 +178,5 @@ public final class ClientNpcSpawner {
         spawnedNpcs.clear();
         spawned = false;
     }
+
 }

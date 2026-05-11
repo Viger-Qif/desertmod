@@ -1,5 +1,6 @@
 package mxnder.desertmod.screen;
 
+import mxnder.desertmod.npc.ClientNpcSpawner;
 import mxnder.desertmod.npc.NpcDataManager;
 import mxnder.desertmod.npc.NpcEntry;
 import net.minecraft.client.MinecraftClient;
@@ -51,7 +52,7 @@ public class NpcEditorScreen extends Screen {
     // === Списки для переключателей ===
     private static final List<String> NPC_TYPES = List.of("simple", "example");
     private static final Map<String, List<String>> ANIMS_BY_TYPE = Map.of(
-            "simple", List.of("idle_hat", "idle_hair", "lean_1_hair", "talk_hair", "sit_1"),
+            "simple", List.of("idle_hat", "idle_hair", "lean_1_hair", "talk_hair"),
             "example", List.of("idle")
     );
 
@@ -315,6 +316,8 @@ public class NpcEditorScreen extends Screen {
             npcList = NpcDataManager.loadNpcs();
             lastListRefresh = System.currentTimeMillis();
 
+            ClientNpcSpawner.refreshAllNpcs();
+
             sendMessage("§a[✔] НПС сохранён: " + id);
             clearForm();
             playClickSound();
@@ -366,6 +369,8 @@ public class NpcEditorScreen extends Screen {
         NpcDataManager.deleteNpc(id);
         npcList = NpcDataManager.loadNpcs();
         lastListRefresh = System.currentTimeMillis();
+
+        ClientNpcSpawner.refreshAllNpcs();
 
         sendMessage("§a[✔] НПС удалён: " + id);
         if (editingEntry != null && editingEntry.id().equals(id)) {

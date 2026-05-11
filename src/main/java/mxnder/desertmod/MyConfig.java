@@ -118,7 +118,10 @@ public class MyConfig {
                                         )))
                                         .binding(48,
                                                 () -> HANDLER.instance().npcRenderRadius,
-                                                newVal -> HANDLER.instance().npcRenderRadius = newVal)
+                                                newVal -> {
+                                                HANDLER.instance().npcRenderRadius = newVal;
+                                                ClientNpcSpawner.refreshAllNpcs();
+                                                })
                                         .controller(opt -> IntegerSliderControllerBuilder.create(opt)
                                                 .range(16, 128)      // Мин/макс
                                                 .step(8)             // Шаг
