@@ -185,16 +185,12 @@ public class NpcDataManager {
         return null;
     }
 
-    /**
-     * Получает путь к файлу конфигурации NPC.
-     */
+    // Получает путь к файлу конфигурации NPC
     private static File getConfigFile() {
         return FabricLoader.getInstance().getConfigDir().resolve(NPC_CONFIG_PATH).toFile();
     }
 
-    /**
-     * Очищает кэш (при выходе из мира например).
-     */
+    // Очищает кэш (при выходе из мира например)
     public static void clearCache() {
         npcCache = null;
     }

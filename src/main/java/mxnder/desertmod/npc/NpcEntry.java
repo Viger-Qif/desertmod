@@ -7,14 +7,6 @@ import mxnder.desertmod.ModEntities;
 /**
  * Данные для клиентского NPC (для редактора и JSON сохранения).
  * Содержит всю информацию необходимую для спавна и отображения NPC.
- *
- * @param id Уникальный идентификатор NPC (для редактирования/удаления)
- * @param typeKey Ключ типа сущности ("simple", "example") - для UI
- * @param x Координата X
- * @param y Координата Y
- * @param z Координата Z
- * @param yaw Угол поворота (0-360)
- * @param animVariant Вариант анимации
  */
 public record NpcEntry(
         String id,
