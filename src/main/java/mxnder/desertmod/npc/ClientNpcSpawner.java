@@ -7,6 +7,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.MobEntity;
 import org.jspecify.annotations.Nullable;
@@ -61,34 +62,50 @@ public final class ClientNpcSpawner {
         if (spawned) return;
 
         if (npcsEnabled) {
-            spawnAlongTheRiver(world);
+            //spawnAlongTheRiver(world);
+            spawnFromConfig(world);
             spawned = true;
         }
 
     }
 
-    private static void spawnAlongTheRiver(ClientWorld world) {
+    /*private static void spawnAlongTheRiver(ClientWorld world) {
         for (ClientNpcEntry entry : AlongTheRiverNpcList.NPCS) {
             Entity npc = spawnNpc(world, entry);
             if (npc != null) spawnedNpcs.add(npc); // Сохраняем ссылку
         }
+    }*/
+
+    private static void spawnFromConfig(ClientWorld world) {
+        List<NpcEntry> npcs = NpcDataManager.loadNpcs();
+        for (NpcEntry entry : npcs) {
+            Entity npc = spawnNpc(world, entry.getEntityType(), entry.x(), entry.y(), entry.z(), entry.yaw(), entry.animVariant());
+            if (npc != null) spawnedNpcs.add(npc);
+        }
     }
 
     @Nullable
-    private static Entity spawnNpc(ClientWorld world, ClientNpcEntry entry) {
-        Entity npc = entry.type().create(world, SpawnReason.LOAD);
+    //private static Entity spawnNpc(ClientWorld world, ClientNpcEntry entry) {
+        //Entity npc = entry.type().create(world, SpawnReason.LOAD);
+    private static Entity spawnNpc(ClientWorld world, EntityType<? extends Entity> type,
+                                   double x, double y, double z, float yaw, String animVariant) {
+        if (type == null) return null;
+
+        Entity npc = type.create(world, SpawnReason.LOAD);
         if (npc == null) return null;
 
         // Позиция и направление взгляда NPC
-        npc.refreshPositionAndAngles(
+        /*npc.refreshPositionAndAngles(
                 entry.x(), entry.y(), entry.z(),
                 entry.yaw(), 0f
         );
-        npc.setHeadYaw(entry.yaw());
+        npc.setHeadYaw(entry.yaw());*/
+        npc.refreshPositionAndAngles(x, y, z, yaw, 0f);
+        npc.setHeadYaw(yaw);
 
         // Вариант анимации применяется только к SimpleNpcEntity
         if (npc instanceof SimpleNpcEntity simple) {
-            simple.setAnimVariant(entry.animVariant());
+            simple.setAnimVariant(animVariant);
         }
 
 
@@ -104,4 +121,17 @@ public final class ClientNpcSpawner {
         return npc;
     }
 
+    /**
+     * Удаляет всех заспавненных NPC и очищает список.
+     * Используется при перезагрузке конфига.
+     */
+    public static void despawnAll(ClientWorld world) {
+        if (world != null) {
+            for (Entity npc : spawnedNpcs) {
+                world.removeEntity(npc.getId(), Entity.RemovalReason.DISCARDED);
+            }
+        }
+        spawnedNpcs.clear();
+        spawned = false;
+    }
 }

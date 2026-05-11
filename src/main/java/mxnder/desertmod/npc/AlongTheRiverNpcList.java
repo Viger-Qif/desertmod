@@ -1,4 +1,4 @@
-package mxnder.desertmod.npc;
+/*package mxnder.desertmod.npc;
 
 import mxnder.desertmod.ModEntities;
 
@@ -11,7 +11,6 @@ public final class AlongTheRiverNpcList {
     idle_hair
     idle_hat
     lean_1_hair
-     */
 
     // Список NPC, которые появляются вдоль реки при входе в мир
     public static final List<ClientNpcEntry> NPCS = List.of(
@@ -26,4 +25,4 @@ public final class AlongTheRiverNpcList {
             new ClientNpcEntry(ModEntities.SIMPLE_NPC,  5375.5, 64, -3302.9, 260f, "idle_hat")
             //new ClientNpcEntry(ModEntities.SIMPLE_NPC, 5394, 64, -3276, 180f, "sit_1")
     );
-}
+}*/

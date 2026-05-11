@@ -35,9 +35,9 @@ public class DesertmodClient implements ClientModInitializer {
     public void onInitializeClient() {
 
         registerEntityRenderers(); // регистр рендеров
-        registerKeybindings(); // регистр кнопки F
+        registerKeybindings(); // регистр кнопки X
         registerNpcSpawning(); // обработчик нпс
-        registerClientTicks(); // обработчик кнопки F
+        registerClientTicks(); // обработчик кнопки X
         registerNpcInteraction(); // обработчик пкм по нпс
         registerItemFrameInteraction(); // обработчик пкм по рамке с предметом
         MyConfig.HANDLER.load(); // загрузка конфига (окна настроек)
@@ -67,7 +67,7 @@ public class DesertmodClient implements ClientModInitializer {
                 new KeyBinding(
                         "key.desertmod.interact", // ключ локализации названия
                         InputUtil.Type.KEYSYM, // тип ввода (клавиатура)
-                        GLFW.GLFW_KEY_F, // клавиша F
+                        GLFW.GLFW_KEY_X, // клавиша X
                         KeyBinding.Category.GAMEPLAY) // существующая категория из игры
         );
     }
@@ -81,11 +81,8 @@ public class DesertmodClient implements ClientModInitializer {
         // Общий клиентский тик: кнопки и визуальные таймеры
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (interactWithNpcKey.wasPressed()) {
-                client.player.sendMessage(Text.literal("ты тыкнул кнопку взаимодействия"), false);
-
                 var yacl = new MyConfig().createYACL();
                 client.setScreen(yacl.generateScreen(client.currentScreen));
-
             }
 
             SIMPLE_NPC_DIALOG.tick();
