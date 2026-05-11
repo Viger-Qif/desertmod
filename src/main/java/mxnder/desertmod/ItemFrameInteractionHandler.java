@@ -30,6 +30,28 @@ public class ItemFrameInteractionHandler {
                 return ActionResult.PASS;
             }
 
+            // Проверяем, включено ли взаимодействие с рамками в конфиге
+            if (!MyConfig.HANDLER.instance().enableFrameInteraction) {
+                return ActionResult.PASS;
+            }
+
+            // Проверяем, находится ли рамка в радиусе взаимодействия
+            MinecraftClient client = MinecraftClient.getInstance();
+            if (client.player == null) {
+                return ActionResult.PASS;
+            }
+
+            // Используем тот же радиус, что и для НПС (или можно сделать отдельную настройку)
+            int radius = MyConfig.HANDLER.instance().npcRenderRadius;
+            double dx = entity.getX() - client.player.getX();
+            double dy = entity.getY() - client.player.getY();
+            double dz = entity.getZ() - client.player.getZ();
+            double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+            if (dist > radius) {
+                return ActionResult.PASS;
+            }
+
             // Проверяем, является ли сущность рамкой для предметов
             if (entity instanceof ItemFrameEntity itemFrame) {
                 // Получаем предмет в рамке

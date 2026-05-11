@@ -11,7 +11,6 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.MobEntity;
 import org.jspecify.annotations.Nullable;
-import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +22,20 @@ public final class ClientNpcSpawner {
     private static boolean spawned = false;
     private static boolean npcsEnabled;
 
+    // Для отслеживания позиции игрока и динамического спавна/деспауна
+    private static double lastPlayerX = Double.NaN;
+    private static double lastPlayerY = Double.NaN;
+    private static double lastPlayerZ = Double.NaN;
+    private static final double POSITION_THRESHOLD = 4.0; // Минимальное расстояние для проверки
+
+    // Храним все NPC из конфига (даже те, что вне радиуса)
+    private static final List<NpcEntry> allNpcEntries = new ArrayList<>();
+
     public static void syncFromConfig() {
         npcsEnabled = MyConfig.HANDLER.instance().enableNPC;
+        // Загружаем все NPC из конфига при синхронизации
+        allNpcEntries.clear();
+        allNpcEntries.addAll(NpcDataManager.loadNpcs());
     }
 
     // Храним ссылки на всех нпс, чтобы управлять ими
@@ -50,28 +61,79 @@ public final class ClientNpcSpawner {
         return npcsEnabled;
     }
 
+    /**
+     * Проверяет, находится ли точка в радиусе прогрузки от игрока
+     */
+    public static boolean isInRenderRadius(MinecraftClient client, double x, double y, double z) {
+        if (client.player == null) return false;
+
+        int radius = MyConfig.HANDLER.instance().npcRenderRadius;
+        double playerX = client.player.getX();
+        double playerY = client.player.getY();
+        double playerZ = client.player.getZ();
+
+        double dx = x - playerX;
+        double dy = y - playerY;
+        double dz = z - playerZ;
+        double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+        return dist <= radius;
+    }
+
     public static void OnClientTick(MinecraftClient client) {
         ClientWorld world = client.world;
 
         // Если мира нет — сбрасываем флаг (игрок вышел в меню или сменил мир)
         if (world == null) {
             spawned = false;
+            lastPlayerX = Double.NaN;
+            lastPlayerY = Double.NaN;
+            lastPlayerZ = Double.NaN;
             return;
         }
 
-        // Если уже заспавнили в этом мире — ничего не делаем
-        if (spawned) return;
+        if (!npcsEnabled) {
+            // Если НПС отключены - очищаем всех
+            despawnAll(world);
+            return;
+        }
 
-        if (npcsEnabled) {
-            spawnFromConfig(world);
+        // Если ещё не заспавнили в этом мире — спавним
+        if (!spawned) {
+            spawnFromConfig(world, client);
             spawned = true;
+
+            // Проверяем, изменилась ли позиция игрока достаточно для пересчёта
+            var player = client.player;
+            if (player != null) {
+                double playerX = player.getX();
+                double playerY = player.getY();
+                double playerZ = player.getZ();
+
+                boolean positionChanged = Double.isNaN(lastPlayerX) ||
+                        Math.abs(playerX - lastPlayerX) > POSITION_THRESHOLD ||
+                        Math.abs(playerY - lastPlayerY) > POSITION_THRESHOLD ||
+                        Math.abs(playerZ - lastPlayerZ) > POSITION_THRESHOLD;
+
+                if (positionChanged) {
+                    // Обновляем позицию и переспавниваем НПС
+                    lastPlayerX = playerX;
+                    lastPlayerY = playerY;
+                    lastPlayerZ = playerZ;
+                    refreshAllNpcs();
+                }
+            }
         }
 
     }
 
-    private static void spawnFromConfig(ClientWorld world) {
-        List<NpcEntry> npcs = NpcDataManager.loadNpcs();
-        for (NpcEntry entry : npcs) {
+    private static void spawnFromConfig(ClientWorld world, MinecraftClient client) {
+        for (NpcEntry entry : allNpcEntries) {
+            // Проверяем радиус перед спавном
+            if (!isInRenderRadius(client, entry.x(), entry.y(), entry.z())) {
+                continue;
+            }
+
             Entity npc = spawnNpc(world, entry.getEntityType(), entry.x(), entry.y(), entry.z(), entry.yaw(), entry.animVariant());
             if (npc != null) spawnedNpcs.add(npc);
         }
@@ -118,29 +180,41 @@ public final class ClientNpcSpawner {
         ClientWorld world = client.world;
         var player = client.player;
 
-        // ✅ Удаляем всех НПС
-        for (Entity npc : spawnedNpcs) {
-            if (npc != null) {
-                npc.discard();
-            }
-        }
-        spawnedNpcs.clear();
+        // ✅ Удаляем только тех НПС, которые сейчас вне радиуса
+        // Оставляем тех, кто всё ещё в радиусе, чтобы не сбрасывать анимацию
+        spawnedNpcs.removeIf(npc -> {
+            if (npc == null) return true;
 
-        // ✅ Спавним заново
-        var npcs = NpcDataManager.loadNpcs();
-        int radius = MyConfig.HANDLER.instance().npcRenderRadius;
-
-        for (NpcEntry npcData : npcs) {
-            // ✅ Получаем координаты игрока ОТДЕЛЬНО
-            double playerX = player.getX();
-            double playerY = player.getY();
-            double playerZ = player.getZ();
-
-            // ✅ Считаем расстояние
-            double dx = npcData.x() - playerX;
-            double dy = npcData.y() - playerY;
-            double dz = npcData.z() - playerZ;
+            double dx = npc.getX() - player.getX();
+            double dy = npc.getY() - player.getY();
+            double dz = npc.getZ() - player.getZ();
             double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            int radius = MyConfig.HANDLER.instance().npcRenderRadius;
+
+            if (dist > radius) {
+                npc.discard();
+                return true; // Удаляем из списка
+            }
+            return false; // Оставляем NPC
+        });
+
+        // ✅ Спавним новых НПС, которых ещё нет в радиусе
+        for (NpcEntry npcData : allNpcEntries) {
+            // Пропускаем если NPC уже заспавлен
+            boolean alreadySpawned = spawnedNpcs.stream()
+                    .anyMatch(npc -> npc != null &&
+                            Math.abs(npc.getX() - npcData.x()) < 0.5 &&
+                            Math.abs(npc.getY() - npcData.y()) < 0.5 &&
+                            Math.abs(npc.getZ() - npcData.z()) < 0.5);
+
+            if (alreadySpawned) continue;
+
+            // Проверяем радиус
+            double dx = npcData.x() - player.getX();
+            double dy = npcData.y() - player.getY();
+            double dz = npcData.z() - player.getZ();
+            double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            int radius = MyConfig.HANDLER.instance().npcRenderRadius;
 
             if (dist <= radius) {
                 EntityType<? extends Entity> type = npcData.getEntityType();
