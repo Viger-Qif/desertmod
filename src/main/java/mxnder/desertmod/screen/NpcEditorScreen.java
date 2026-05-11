@@ -49,10 +49,10 @@ public class NpcEditorScreen extends Screen {
     private final List<ButtonWidget> listButtons = new ArrayList<>();
 
     // === Списки для переключателей ===
-    private static final List<String> NPC_TYPES = List.of("simple", "lamberjack");
+    private static final List<String> NPC_TYPES = List.of("simple", "example");
     private static final Map<String, List<String>> ANIMS_BY_TYPE = Map.of(
             "simple", List.of("idle_hat", "idle_hair", "lean_1_hair", "talk_hair", "sit_1"),
-            "example", List.of("idle", "work in progress")
+            "example", List.of("idle")
     );
 
     private String currentType = "simple";

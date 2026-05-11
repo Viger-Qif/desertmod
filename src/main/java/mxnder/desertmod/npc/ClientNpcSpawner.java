@@ -62,19 +62,11 @@ public final class ClientNpcSpawner {
         if (spawned) return;
 
         if (npcsEnabled) {
-            //spawnAlongTheRiver(world);
             spawnFromConfig(world);
             spawned = true;
         }
 
     }
-
-    /*private static void spawnAlongTheRiver(ClientWorld world) {
-        for (ClientNpcEntry entry : AlongTheRiverNpcList.NPCS) {
-            Entity npc = spawnNpc(world, entry);
-            if (npc != null) spawnedNpcs.add(npc); // Сохраняем ссылку
-        }
-    }*/
 
     private static void spawnFromConfig(ClientWorld world) {
         List<NpcEntry> npcs = NpcDataManager.loadNpcs();
@@ -95,11 +87,6 @@ public final class ClientNpcSpawner {
         if (npc == null) return null;
 
         // Позиция и направление взгляда NPC
-        /*npc.refreshPositionAndAngles(
-                entry.x(), entry.y(), entry.z(),
-                entry.yaw(), 0f
-        );
-        npc.setHeadYaw(entry.yaw());*/
         npc.refreshPositionAndAngles(x, y, z, yaw, 0f);
         npc.setHeadYaw(yaw);
 
