@@ -14,6 +14,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.client.MinecraftClient;
 import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
+import mxnder.desertmod.npc.NpcEntry;
 
 //  ОКНО НАСТРОЙКИ МОДА (ЗАВИСИМОСТЬ С БИБЛИОТЕКОЙ YACL)
 
@@ -121,6 +122,8 @@ public class MyConfig {
                                                 newVal -> {
                                                 HANDLER.instance().npcRenderRadius = newVal;
                                                 ClientNpcSpawner.refreshAllNpcs();
+                                                // Сбрасываем кэш статистики для мгновенного обновления
+                                                resetStatsCache();
                                                 })
                                         .controller(opt -> IntegerSliderControllerBuilder.create(opt)
                                                 .range(16, 128)      // Мин/макс
@@ -141,6 +144,11 @@ public class MyConfig {
     private int cachedTotalCount = 0;
     private int cachedActiveCount = 0;
     private long lastStatsUpdate = 0;
+
+    // Сбрасывает кэш статистики для принудительного обновления
+    private void resetStatsCache() {
+        lastStatsUpdate = 0;
+    }
 
     // Возвращает общее количество НПС в конфиге.
     private int getTotalNpcCount() {
@@ -164,7 +172,30 @@ public class MyConfig {
         try {
             var npcs = NpcDataManager.loadNpcs();
             cachedTotalCount = npcs != null ? npcs.size() : 0;
-            cachedActiveCount = cachedTotalCount; // Пока все считаем активными
+            // Считаем только NPC в радиусе от игрока
+            cachedActiveCount = 0;
+            MinecraftClient client = MinecraftClient.getInstance();
+            if (client.player != null && npcs != null) {
+                double playerX = client.player.getX();
+                double playerY = client.player.getY();
+                double playerZ = client.player.getZ();
+                int radius = HANDLER.instance().npcRenderRadius;
+
+                for (NpcEntry entry : npcs) {
+                    double dx = entry.x() - playerX;
+                    double dy = entry.y() - playerY;
+                    double dz = entry.z() - playerZ;
+                    double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+                    if (dist <= radius) {
+                        cachedActiveCount++;
+                    }
+                }
+            } else if (npcs != null) {
+                // Если игрока нет (меню), считаем всех активными
+                cachedActiveCount = cachedTotalCount;
+            }
+
             lastStatsUpdate = System.currentTimeMillis();
         } catch (Exception e) {
             cachedTotalCount = 0;

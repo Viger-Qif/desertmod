@@ -14,7 +14,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.text.Text;
+import mxnder.desertmod.npc.NpcDataManager;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import org.lwjgl.glfw.GLFW;
@@ -44,6 +44,8 @@ public class DesertmodClient implements ClientModInitializer {
         ItemFrameInteractionHandler.register();
 
         ClientNpcSpawner.syncFromConfig();
+        // Запускаем FileWatcher для отслеживания изменений в JSON файле NPC
+        NpcDataManager.startFileWatcher();
 
     }
 
@@ -75,6 +77,12 @@ public class DesertmodClient implements ClientModInitializer {
     private void registerNpcSpawning() {
         // РЕГИСТРАЦИЯ ОБРАБОТЧИКА СПАВНА NPC
         ClientTickEvents.END_CLIENT_TICK.register(ClientNpcSpawner::OnClientTick);
+        // Регистрируем обработчик для обновления NPC при изменении радиуса рендера в реальном времени
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.world != null && client.player != null) {
+                ClientNpcSpawner.updateNpcVisibilityByRadius(client);
+            }
+        });
     }
 
     private void registerClientTicks() {

@@ -11,6 +11,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.MobEntity;
 import org.jspecify.annotations.Nullable;
+import java.util.Objects;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +42,12 @@ public final class ClientNpcSpawner {
     // Храним ссылки на всех нпс, чтобы управлять ими
     private static final List<Entity> spawnedNpcs = new ArrayList<>();
 
+    // Последний известный радиус рендера
+    private static int lastKnownRadius = 50;
+
+    // Таймер для периодической проверки изменений (каждые 10 тиков)
+    private static int tickCounter = 0;
+
     public static void setNpcsEnabled(boolean enabled) {
         npcsEnabled = enabled;
 
@@ -59,6 +66,136 @@ public final class ClientNpcSpawner {
 
     public static boolean isNpcsEnabled() {
         return npcsEnabled;
+    }
+
+    /**
+     * Обновляет видимость NPC на основе радиуса рендера.
+     * Вызывается каждый тик для проверки изменений позиции игрока и радиуса.
+     */
+    public static void updateNpcVisibilityByRadius(MinecraftClient client) {
+        if (client.world == null || client.player == null) return;
+
+        tickCounter++;
+        if (tickCounter < 10) return; // Проверяем только каждые 10 тиков для производительности
+        tickCounter = 0;
+
+        ClientWorld world = client.world;
+        var player = client.player;
+        int currentRadius = MyConfig.HANDLER.instance().npcRenderRadius;
+
+        // Загружаем актуальный список NPC
+        List<NpcEntry> npcs = NpcDataManager.loadNpcs();
+
+        // Проверяем, изменилось ли количество NPC
+        boolean npcListChanged = (npcs.size() != allNpcEntries.size());
+        if (!npcListChanged) {
+            for (int i = 0; i < npcs.size(); i++) {
+                if (!npcs.get(i).equals(allNpcEntries.get(i))) {
+                    npcListChanged = true;
+                    break;
+                }
+            }
+        }
+
+        // Если список NPC изменился - полный рефреш
+        if (npcListChanged) {
+            allNpcEntries.clear();
+            allNpcEntries.addAll(npcs);
+            refreshAllNpcs();
+            return;
+        }
+
+        // Проверяем каждого заспавленного NPC
+        List<Entity> toRemove = new ArrayList<>();
+        List<NpcEntry> toSpawn = new ArrayList<>();
+
+        double playerX = player.getX();
+        double playerY = player.getY();
+        double playerZ = player.getZ();
+
+        for (Entity npc : spawnedNpcs) {
+            if (npc == null) {
+                toRemove.add(npc);
+                continue;
+            }
+
+            // Находим соответствующего NPC в списке по позиции
+            NpcEntry entry = null;
+            for (NpcEntry e : allNpcEntries) {
+                if (Math.abs(e.x() - npc.getX()) < 0.5 &&
+                        Math.abs(e.y() - npc.getY()) < 0.5 &&
+                        Math.abs(e.z() - npc.getZ()) < 0.5) {
+                    entry = e;
+                    break;
+                }
+            }
+
+            if (entry == null) {
+                toRemove.add(npc);
+                continue;
+            }
+
+            double dx = entry.x() - playerX;
+            double dy = entry.y() - playerY;
+            double dz = entry.z() - playerZ;
+            double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+            if (dist > currentRadius) {
+                toRemove.add(npc);
+            }
+        }
+
+        // Проверяем каких NPC нужно заспавнить
+        for (NpcEntry entry : allNpcEntries) {
+            boolean alreadySpawned = false;
+            for (Entity npc : spawnedNpcs) {
+                if (npc != null &&
+                        Math.abs(entry.x() - npc.getX()) < 0.5 &&
+                        Math.abs(entry.y() - npc.getY()) < 0.5 &&
+                        Math.abs(entry.z() - npc.getZ()) < 0.5) {
+                    alreadySpawned = true;
+                    break;
+                }
+            }
+
+            if (!alreadySpawned) {
+                double dx = entry.x() - playerX;
+                double dy = entry.y() - playerY;
+                double dz = entry.z() - playerZ;
+                double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+                if (dist <= currentRadius) {
+                    toSpawn.add(entry);
+                }
+            }
+        }
+
+        // Удаляем NPC вне радиуса
+        for (Entity npc : toRemove) {
+            if (npc != null) {
+                world.removeEntity(npc.getId(), Entity.RemovalReason.DISCARDED);
+                spawnedNpcs.remove(npc);
+            }
+        }
+
+        // Спавним новые NPC в радиусе
+        for (NpcEntry entry : toSpawn) {
+            EntityType<? extends Entity> type = entry.getEntityType();
+            if (type != null) {
+                Entity npc = spawnNpc(
+                        world,
+                        type,
+                        entry.x(),
+                        entry.y(),
+                        entry.z(),
+                        entry.yaw(),
+                        entry.animVariant()
+                );
+                if (npc != null) {
+                    spawnedNpcs.add(npc);
+                }
+            }
+        }
     }
 
     /**
@@ -128,10 +265,24 @@ public final class ClientNpcSpawner {
     }
 
     private static void spawnFromConfig(ClientWorld world, MinecraftClient client) {
-        for (NpcEntry entry : allNpcEntries) {
-            // Проверяем радиус перед спавном
-            if (!isInRenderRadius(client, entry.x(), entry.y(), entry.z())) {
-                continue;
+        List<NpcEntry> npcs = NpcDataManager.loadNpcs();
+        allNpcEntries.clear();
+        allNpcEntries.addAll(npcs);
+
+        var player = MinecraftClient.getInstance().player;
+        int radius = MyConfig.HANDLER.instance().npcRenderRadius;
+
+        for (NpcEntry entry : npcs) {
+            // Спавним только NPC в радиусе от игрока
+            if (player != null) {
+                double dx = entry.x() - player.getX();
+                double dy = entry.y() - player.getY();
+                double dz = entry.z() - player.getZ();
+                double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+                if (dist > radius) {
+                    continue; // Пропускаем NPC вне радиуса
+                }
             }
 
             Entity npc = spawnNpc(world, entry.getEntityType(), entry.x(), entry.y(), entry.z(), entry.yaw(), entry.animVariant());
@@ -180,41 +331,32 @@ public final class ClientNpcSpawner {
         ClientWorld world = client.world;
         var player = client.player;
 
-        // ✅ Удаляем только тех НПС, которые сейчас вне радиуса
-        // Оставляем тех, кто всё ещё в радиусе, чтобы не сбрасывать анимацию
-        spawnedNpcs.removeIf(npc -> {
-            if (npc == null) return true;
-
-            double dx = npc.getX() - player.getX();
-            double dy = npc.getY() - player.getY();
-            double dz = npc.getZ() - player.getZ();
-            double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            int radius = MyConfig.HANDLER.instance().npcRenderRadius;
-
-            if (dist > radius) {
+        // ✅ Удаляем всех НПС
+        for (Entity npc : spawnedNpcs) {
+            if (npc != null) {
                 npc.discard();
-                return true; // Удаляем из списка
             }
-            return false; // Оставляем NPC
-        });
+        }
 
-        // ✅ Спавним новых НПС, которых ещё нет в радиусе
-        for (NpcEntry npcData : allNpcEntries) {
-            // Пропускаем если NPC уже заспавлен
-            boolean alreadySpawned = spawnedNpcs.stream()
-                    .anyMatch(npc -> npc != null &&
-                            Math.abs(npc.getX() - npcData.x()) < 0.5 &&
-                            Math.abs(npc.getY() - npcData.y()) < 0.5 &&
-                            Math.abs(npc.getZ() - npcData.z()) < 0.5);
+        spawnedNpcs.clear();
+        allNpcEntries.clear();
 
-            if (alreadySpawned) continue;
+        // ✅ Спавним заново
+        var npcs = NpcDataManager.loadNpcs();
+        allNpcEntries.addAll(npcs);
+        int radius = MyConfig.HANDLER.instance().npcRenderRadius;
 
-            // Проверяем радиус
-            double dx = npcData.x() - player.getX();
-            double dy = npcData.y() - player.getY();
-            double dz = npcData.z() - player.getZ();
+        for (NpcEntry npcData : npcs) {
+            // ✅ Получаем координаты игрока ОТДЕЛЬНО
+            double playerX = player.getX();
+            double playerY = player.getY();
+            double playerZ = player.getZ();
+
+            // ✅ Считаем расстояние
+            double dx = npcData.x() - playerX;
+            double dy = npcData.y() - playerY;
+            double dz = npcData.z() - playerZ;
             double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            int radius = MyConfig.HANDLER.instance().npcRenderRadius;
 
             if (dist <= radius) {
                 EntityType<? extends Entity> type = npcData.getEntityType();

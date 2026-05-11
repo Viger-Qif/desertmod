@@ -4,12 +4,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.fabricmc.loader.api.FabricLoader;
-
+import java.nio.file.*;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Менеджер для хранения и управления данными NPC.
@@ -31,6 +32,12 @@ public class NpcDataManager {
 
     // Кэш загруженных данных
     private static List<NpcEntry> npcCache = null;
+
+    // File watcher для отслеживания изменений в файле
+    private static WatchService watchService = null;
+    private static Thread watchThread = null;
+    private static final AtomicBoolean watchStarted = new AtomicBoolean(false);
+    private static Path npcConfigPath = null;
 
     /**
      * Загружает список NPC из JSON файла.
@@ -193,5 +200,77 @@ public class NpcDataManager {
     // Очищает кэш (при выходе из мира например)
     public static void clearCache() {
         npcCache = null;
+    }
+
+    /**
+     * Запускает FileWatcher для отслеживания изменений в JSON файле NPC.
+     * Вызывается при инициализации клиента.
+     */
+    public static void startFileWatcher() {
+        if (!watchStarted.compareAndSet(false, true)) {
+            return; // Уже запущен
+        }
+
+        npcConfigPath = getConfigFile().toPath();
+
+        try {
+            watchService = FileSystems.getDefault().newWatchService();
+            npcConfigPath.getParent().register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
+
+            watchThread = new Thread(() -> {
+                while (!Thread.currentThread().isInterrupted()) {
+                    WatchKey key;
+                    try {
+                        key = watchService.take();
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+
+                    for (WatchEvent<?> event : key.pollEvents()) {
+                        WatchEvent.Kind<?> kind = event.kind();
+                        if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                            Path changedFile = (Path) event.context();
+                            if (changedFile.getFileName().toString().equals(NPC_CONFIG_PATH)) {
+                                // Файл изменён - обновляем кэш и вызываем refresh
+                                System.out.println("[DesertMod] NPC config file changed, refreshing NPCs...");
+                                npcCache = null; // Сбрасываем кэш
+
+                                // Вызываем refresh NPC на клиенте
+                                ClientNpcSpawner.refreshAllNpcs();
+                            }
+                        }
+                    }
+
+                    key.reset();
+                }
+            }, "DesertMod-NPC-FileWatcher");
+            watchThread.setDaemon(true);
+            watchThread.start();
+
+            System.out.println("[DesertMod] NPC FileWatcher started for: " + npcConfigPath);
+        } catch (IOException e) {
+            System.err.println("[DesertMod] Failed to start NPC FileWatcher: " + e.getMessage());
+            watchStarted.set(false);
+        }
+    }
+
+    /**
+     * Останавливает FileWatcher.
+     * Вызывается при закрытии игры.
+     */
+    public static void stopFileWatcher() {
+        if (watchThread != null) {
+            watchThread.interrupt();
+            watchThread = null;
+        }
+        if (watchService != null) {
+            try {
+                watchService.close();
+            } catch (IOException e) {
+                // Игнорируем
+            }
+            watchService = null;
+        }
+        watchStarted.set(false);
     }
 }
