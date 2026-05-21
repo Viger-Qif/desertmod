@@ -11,7 +11,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.MobEntity;
 import org.jspecify.annotations.Nullable;
-import java.util.Objects;
+import net.minecraft.text.Text;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -189,7 +189,8 @@ public final class ClientNpcSpawner {
                         entry.y(),
                         entry.z(),
                         entry.yaw(),
-                        entry.animVariant()
+                        entry.animVariant(),
+                        entry.id()
                 );
                 if (npc != null) {
                     spawnedNpcs.add(npc);
@@ -285,14 +286,14 @@ public final class ClientNpcSpawner {
                 }
             }
 
-            Entity npc = spawnNpc(world, entry.getEntityType(), entry.x(), entry.y(), entry.z(), entry.yaw(), entry.animVariant());
+            Entity npc = spawnNpc(world, entry.getEntityType(), entry.x(), entry.y(), entry.z(), entry.yaw(), entry.animVariant(), entry.id());
             if (npc != null) spawnedNpcs.add(npc);
         }
     }
 
     @Nullable
     private static Entity spawnNpc(ClientWorld world, EntityType<? extends Entity> type,
-                                   double x, double y, double z, float yaw, String animVariant) {
+                                   double x, double y, double z, float yaw, String animVariant, String npcId) {
         if (type == null) return null;
 
         Entity npc = type.create(world, SpawnReason.LOAD);
@@ -301,6 +302,12 @@ public final class ClientNpcSpawner {
         // Позиция и направление взгляда NPC
         npc.refreshPositionAndAngles(x, y, z, yaw, 0f);
         npc.setHeadYaw(yaw);
+
+        // Устанавливаем имя NPC из ID если включена настройка
+        if (MyConfig.HANDLER.instance().showNpcIdOnHead && npcId != null && !npcId.isEmpty()) {
+            npc.setCustomName(Text.literal(npcId));
+            npc.setCustomNameVisible(true);
+        }
 
         // Вариант анимации применяется только к SimpleNpcEntity
         if (npc instanceof SimpleNpcEntity simple) {
@@ -369,7 +376,8 @@ public final class ClientNpcSpawner {
                             npcData.y(),
                             npcData.z(),
                             npcData.yaw(),
-                            npcData.animVariant()
+                            npcData.animVariant(),
+                            npcData.id()
                     );
 
                     if (npc != null) {

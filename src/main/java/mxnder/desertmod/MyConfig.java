@@ -41,6 +41,8 @@ public class MyConfig {
     // Группа 2: Редактор
     @SerialEntry
     public int npcRenderRadius = 50;
+    @SerialEntry
+    public boolean showNpcIdOnHead = false; // Показывать ID NPC над головой
 
     // === ПОСТРОЕНИЕ ИНТЕРФЕЙСА ===
     public YetAnotherConfigLib createYACL() {
@@ -131,7 +133,23 @@ public class MyConfig {
                                                 .formatValue(val -> Text.literal(val + " блоков")))
                                         .build())
 
+                                // 4. Показывать ID на голове NPC
+                                .option(Option.<Boolean>createBuilder()
+                                        .name(Text.literal("Включить айди на головой нпс"))
+                                        .description(OptionDescription.of(Text.literal(
+                                                "При включении всем НПС даётся имя в соответствии с их айди из json файла"
+                                        )))
+                                        .binding(false,
+                                                () -> HANDLER.instance().showNpcIdOnHead,
+                                                newVal -> {
+                                                    HANDLER.instance().showNpcIdOnHead = newVal;
+                                                    ClientNpcSpawner.refreshAllNpcs();
+                                                })
+                                        .controller(TickBoxControllerBuilder::create)
+                                        .build())
                                 .build())
+
+
 
                         .build())
 
