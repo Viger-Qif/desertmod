@@ -34,9 +34,10 @@ public class SimpleNpcEntity extends PathAwareEntity implements GeoEntity {
 
     @Override
     public void registerControllers(final AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<SimpleNpcEntity>(
-                "idle", 0, this::idleAnimController)
-        );
+        AnimationController<SimpleNpcEntity> controller = new AnimationController<SimpleNpcEntity>(
+                "idle", 0, this::idleAnimController);
+        controller.setAnimationSpeed(1.0); // Явная установка скорости анимации
+        controllers.add(controller);
     }
 
     private static final RawAnimation IDLE_HAIR = RawAnimation.begin().thenLoop("idle_hair");

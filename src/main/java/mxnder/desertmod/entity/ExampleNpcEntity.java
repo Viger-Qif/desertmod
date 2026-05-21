@@ -65,12 +65,13 @@ public class ExampleNpcEntity extends PathAwareEntity implements GeoEntity {
     // АНИМАЦИИ
     @Override
     public void registerControllers(final AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<ExampleNpcEntity>(
+        AnimationController<ExampleNpcEntity> controller = new AnimationController<ExampleNpcEntity>(
                 "idle", 0, this::idleAnimController)
                 .setSoundKeyframeHandler(event -> {
                     spawnChopParticles();
-                })
-        );
+                });
+        controller.setAnimationSpeed(1.0); // Явная установка скорости анимации
+        controllers.add(controller);
     }
 
     private static final RawAnimation IDLE_ANIM = RawAnimation.begin().thenLoop("idle");
