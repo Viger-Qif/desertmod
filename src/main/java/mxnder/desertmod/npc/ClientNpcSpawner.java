@@ -19,7 +19,6 @@ import java.util.List;
 @Environment(EnvType.CLIENT)
 public final class ClientNpcSpawner {
 
-    // Флаг, чтобы спавн был только один раз за вход в мир
     private static boolean spawned = false;
     private static boolean npcsEnabled;
 
@@ -32,6 +31,9 @@ public final class ClientNpcSpawner {
     // Храним все NPC из конфига (даже те, что вне радиуса)
     private static final List<NpcEntry> allNpcEntries = new ArrayList<>();
 
+    // Последний известный радиус рендера
+    private static int lastKnownRadius = 50;
+
     public static void syncFromConfig() {
         npcsEnabled = MyConfig.HANDLER.instance().enableNPC;
         // Загружаем все NPC из конфига при синхронизации
@@ -41,9 +43,6 @@ public final class ClientNpcSpawner {
 
     // Храним ссылки на всех нпс, чтобы управлять ими
     private static final List<Entity> spawnedNpcs = new ArrayList<>();
-
-    // Последний известный радиус рендера
-    private static int lastKnownRadius = 50;
 
     // Таймер для периодической проверки изменений (каждые 10 тиков)
     private static int tickCounter = 0;
@@ -83,6 +82,30 @@ public final class ClientNpcSpawner {
         var player = client.player;
         int currentRadius = MyConfig.HANDLER.instance().npcRenderRadius;
 
+        // Проверяем, изменился ли радиус рендера
+        boolean radiusChanged = (currentRadius != lastKnownRadius);
+
+        // Проверяем, изменилась ли позиция игрока достаточно для пересчёта
+        double playerX = player.getX();
+        double playerY = player.getY();
+        double playerZ = player.getZ();
+
+        boolean positionChanged = Double.isNaN(lastPlayerX) ||
+                Math.abs(playerX - lastPlayerX) > POSITION_THRESHOLD ||
+                Math.abs(playerY - lastPlayerY) > POSITION_THRESHOLD ||
+                Math.abs(playerZ - lastPlayerZ) > POSITION_THRESHOLD;
+
+        // Если ничего не изменилось - выходим
+        if (!radiusChanged && !positionChanged) {
+            return;
+        }
+
+        // Обновляем последние известные значения
+        lastKnownRadius = currentRadius;
+        lastPlayerX = playerX;
+        lastPlayerY = playerY;
+        lastPlayerZ = playerZ;
+
         // Загружаем актуальный список NPC
         List<NpcEntry> npcs = NpcDataManager.loadNpcs();
 
@@ -108,10 +131,6 @@ public final class ClientNpcSpawner {
         // Проверяем каждого заспавленного NPC
         List<Entity> toRemove = new ArrayList<>();
         List<NpcEntry> toSpawn = new ArrayList<>();
-
-        double playerX = player.getX();
-        double playerY = player.getY();
-        double playerZ = player.getZ();
 
         for (Entity npc : spawnedNpcs) {
             if (npc == null) {
@@ -240,27 +259,6 @@ public final class ClientNpcSpawner {
         if (!spawned) {
             spawnFromConfig(world, client);
             spawned = true;
-
-            // Проверяем, изменилась ли позиция игрока достаточно для пересчёта
-            var player = client.player;
-            if (player != null) {
-                double playerX = player.getX();
-                double playerY = player.getY();
-                double playerZ = player.getZ();
-
-                boolean positionChanged = Double.isNaN(lastPlayerX) ||
-                        Math.abs(playerX - lastPlayerX) > POSITION_THRESHOLD ||
-                        Math.abs(playerY - lastPlayerY) > POSITION_THRESHOLD ||
-                        Math.abs(playerZ - lastPlayerZ) > POSITION_THRESHOLD;
-
-                if (positionChanged) {
-                    // Обновляем позицию и переспавниваем НПС
-                    lastPlayerX = playerX;
-                    lastPlayerY = playerY;
-                    lastPlayerZ = playerZ;
-                    refreshAllNpcs();
-                }
-            }
         }
 
     }
