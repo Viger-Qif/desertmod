@@ -12,7 +12,6 @@ import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.text.Text;
 import org.jspecify.annotations.Nullable;
-import java.util.Objects;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,12 +50,12 @@ public final class ClientNpcSpawner {
     public static void setNpcsEnabled(boolean enabled) {
         npcsEnabled = enabled;
 
-        // Если отключаем - удаляем всех заспавленных NPC
+        // Если отключаем - удаляем всех заспавненных NPC
         if (!enabled) {
             ClientWorld world = MinecraftClient.getInstance().world;
             if (world != null) {
                 for (Entity npc : spawnedNpcs) {
-                    world.removeEntity(npc.getId(), Entity.RemovalReason.DISCARDED);
+                    if (npc != null) npc.discard();
                 }
             }
             spawnedNpcs.clear();
@@ -73,6 +72,7 @@ public final class ClientNpcSpawner {
      * Вызывается каждый тик для проверки изменений позиции игрока и радиуса.
      */
     public static void updateNpcVisibilityByRadius(MinecraftClient client) {
+        if (!npcsEnabled) return;
         if (client.world == null || client.player == null) return;
 
         tickCounter++;
@@ -122,7 +122,7 @@ public final class ClientNpcSpawner {
         lastPlayerY = playerY;
         lastPlayerZ = playerZ;
 
-        // Проверяем каждого заспавленного NPC
+        // Проверяем каждого заспавненного NPC
         List<Entity> toRemove = new ArrayList<>();
         List<NpcEntry> toSpawn = new ArrayList<>();
 
@@ -188,7 +188,7 @@ public final class ClientNpcSpawner {
         // Удаляем NPC вне радиуса (с учётом буфера)
         for (Entity npc : toRemove) {
             if (npc != null) {
-                world.removeEntity(npc.getId(), Entity.RemovalReason.DISCARDED);
+                npc.discard();
                 spawnedNpcs.remove(npc);
             }
         }
@@ -204,7 +204,8 @@ public final class ClientNpcSpawner {
                         entry.y(),
                         entry.z(),
                         entry.yaw(),
-                        entry.animVariant()
+                        entry.animVariant(),
+                        entry.id() // ← 8-й аргумент
                 );
                 if (npc != null) {
                     spawnedNpcs.add(npc);
@@ -279,14 +280,24 @@ public final class ClientNpcSpawner {
                 }
             }
 
-            Entity npc = spawnNpc(world, entry.getEntityType(), entry.x(), entry.y(), entry.z(), entry.yaw(), entry.animVariant());
+            // ← ИСПРАВЛЕНО: добавлен entry.id() как 8-й аргумент
+            Entity npc = spawnNpc(
+                    world,
+                    entry.getEntityType(),
+                    entry.x(),
+                    entry.y(),
+                    entry.z(),
+                    entry.yaw(),
+                    entry.animVariant(),
+                    entry.id()
+            );
             if (npc != null) spawnedNpcs.add(npc);
         }
     }
 
     @Nullable
     private static Entity spawnNpc(ClientWorld world, EntityType<? extends Entity> type,
-                                   double x, double y, double z, float yaw, String animVariant) {
+                                   double x, double y, double z, float yaw, String animVariant, String npcId) {
         if (type == null) return null;
 
         Entity npc = type.create(world, SpawnReason.LOAD);
@@ -295,12 +306,19 @@ public final class ClientNpcSpawner {
         // Позиция и направление взгляда NPC
         npc.refreshPositionAndAngles(x, y, z, yaw, 0f);
         npc.setHeadYaw(yaw);
+        npc.setBodyYaw(yaw);
+
+        // === Установка имени при спавне ===
+        if (MyConfig.HANDLER.instance().showNpcIdOnHead && npcId != null && !npcId.isEmpty()) {
+            npc.setCustomName(Text.literal(npcId));
+            npc.setCustomNameVisible(true);
+        }
+        // ===================================
 
         // Вариант анимации применяется только к SimpleNpcEntity
         if (npc instanceof SimpleNpcEntity simple) {
             simple.setAnimVariant(animVariant);
         }
-
 
         // Клиентские NPC должны быть "декоративными"
         npc.setNoGravity(true);
@@ -364,6 +382,7 @@ public final class ClientNpcSpawner {
                 EntityType<? extends Entity> type = npcData.getEntityType();
 
                 if (type != null) {
+                    // ← ИСПРАВЛЕНО: добавлен npcData.id() как 8-й аргумент
                     Entity npc = spawnNpc(
                             world,
                             type,
@@ -371,7 +390,8 @@ public final class ClientNpcSpawner {
                             npcData.y(),
                             npcData.z(),
                             npcData.yaw(),
-                            npcData.animVariant()
+                            npcData.animVariant(),
+                            npcData.id()
                     );
 
                     if (npc != null) {
@@ -384,13 +404,50 @@ public final class ClientNpcSpawner {
     }
 
     /**
+     * Обновляет видимость имён у всех заспавненных NPC.
+     * Вызывается при изменении настройки showNpcIdOnHead.
+     */
+    public static void updateNpcNameVisibility() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.world == null) return;
+
+        boolean showNames = MyConfig.HANDLER.instance().showNpcIdOnHead;
+        List<NpcEntry> npcs = NpcDataManager.loadNpcs();
+
+        for (Entity npc : spawnedNpcs) {
+            if (npc == null || !npc.isAlive()) continue;
+
+            // Находим соответствующий entry по координатам
+            NpcEntry entry = null;
+            for (NpcEntry e : npcs) {
+                if (Math.abs(e.x() - npc.getX()) < 0.5 &&
+                        Math.abs(e.y() - npc.getY()) < 0.5 &&
+                        Math.abs(e.z() - npc.getZ()) < 0.5) {
+                    entry = e;
+                    break;
+                }
+            }
+
+            if (entry == null) continue;
+
+            if (showNames) {
+                npc.setCustomName(Text.literal(entry.id()));
+                npc.setCustomNameVisible(true);
+            } else {
+                npc.setCustomName(null);
+                npc.setCustomNameVisible(false);
+            }
+        }
+    }
+
+    /**
      * Удаляет всех заспавненных NPC и очищает список.
      * Используется при перезагрузке конфига.
      */
     public static void despawnAll(ClientWorld world) {
         if (world != null) {
             for (Entity npc : spawnedNpcs) {
-                world.removeEntity(npc.getId(), Entity.RemovalReason.DISCARDED);
+                if (npc != null) npc.discard();
             }
         }
         spawnedNpcs.clear();

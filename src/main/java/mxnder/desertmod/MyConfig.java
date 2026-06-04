@@ -159,7 +159,7 @@ public class MyConfig {
                                                 () -> HANDLER.instance().showNpcIdOnHead,
                                                 newVal -> {
                                                     HANDLER.instance().showNpcIdOnHead = newVal;
-                                                    ClientNpcSpawner.refreshAllNpcs();
+                                                    ClientNpcSpawner.updateNpcNameVisibility();
                                                 })
                                         .controller(TickBoxControllerBuilder::create)
                                         .build())
