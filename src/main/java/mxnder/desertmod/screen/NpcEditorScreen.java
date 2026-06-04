@@ -68,6 +68,10 @@ public class NpcEditorScreen extends Screen {
 
     private static final int MAX_DISPLAY_NPCS = 30;
     private static final int LIST_ITEM_HEIGHT = 12;
+    private static final int LIST_VISIBLE_HEIGHT = 150;
+
+    // ✅ ИСПРАВЛЕНО: тип double (было 0f — float)
+    private double listScrollOffset = 0.0;
 
     public NpcEditorScreen(Screen parentScreen) {
         super(Text.literal("📝 Редактор НПС"));
@@ -197,6 +201,9 @@ public class NpcEditorScreen extends Screen {
     private void setFilterMode(boolean showAll) {
         showAllNpcs = showAll;
         updateFilterButtonsVisual();
+
+        clearListButtons();
+        createListButtons();
     }
 
     private void updateFilterButtonsVisual() {
@@ -210,50 +217,75 @@ public class NpcEditorScreen extends Screen {
     }
 
     private void createListButtons() {
-        if (npcList == null) return;
+        if (npcList == null) {
+            refreshNpcList();
+            if (npcList == null) return;
+        }
 
         var player = MinecraftClient.getInstance().player;
         int listY = formY + gap * 3 + 40;
-        int npcY = listY + 12;
-        int displayCount = 0;
+        int baseY = listY + 12;
+        int listBottom = baseY + LIST_VISIBLE_HEIGHT;
 
-        for (NpcEntry npc : npcList) {
-            // Фильтр по радиусу (такой же, как в render())
+        int displayCount = 0;
+        int firstVisibleIndex = (int) Math.ceil(listScrollOffset / LIST_ITEM_HEIGHT);
+
+        for (int i = firstVisibleIndex; i < npcList.size(); i++) {
+            NpcEntry npc = npcList.get(i);
+
+            // ✅ Считаем позицию относительно скролла
+            int npcY = baseY + (i * LIST_ITEM_HEIGHT) - (int) listScrollOffset;
+
+            // Прерываем, если вышли за нижнюю границу
+            if (npcY >= listBottom) {
+                break;
+            }
+
+            // Пропускаем элементы выше видимой области
+            if (npcY + LIST_ITEM_HEIGHT < baseY) {
+                continue;
+            }
+
+            // Фильтр по радиусу
             if (!showAllNpcs && player != null) {
                 Vec3d npcPos = new Vec3d(npc.x(), npc.y(), npc.z());
                 Vec3d playerPos = new Vec3d(player.getX(), player.getY(), player.getZ());
                 double dist = playerPos.distanceTo(npcPos);
                 int radius = mxnder.desertmod.MyConfig.HANDLER.instance().npcRenderRadius;
-                if (dist > radius) continue;
+                if (dist > radius) {
+                    continue;
+                }
             }
-            if (displayCount >= MAX_DISPLAY_NPCS) break;
 
-            // === Вычисляем правую границу контента (симметрично formX) ===
-            int rightEdge = width - formX;  // Например: width - 50
 
-            // Кнопка [edit] — внутри строки, справа
+            // ✅ Лимит как в render()
+            if (displayCount >= MAX_DISPLAY_NPCS) {
+                break;
+            }
+
+            // Позиции кнопок
+            int btnX = width - formX - 50; // ✅ Прижимаем к правому краю формы
+
             ButtonWidget editBtn = ButtonWidget.builder(
-                            Text.literal("edit"),
+                            Text.literal("✎"),
                             btn -> editNpc(npc)
                     )
-                    .position(rightEdge - 85, npcY)  // ✅ 35px кнопка + 5px отступ + 30px del
-                    .size(35, LIST_ITEM_HEIGHT)
+                    .position(btnX, npcY)
+                    .size(20, LIST_ITEM_HEIGHT)
                     .build();
             addDrawableChild(editBtn);
             listButtons.add(editBtn);
 
-            // Кнопка [del] — в самом краю, внутри строки
             ButtonWidget delBtn = ButtonWidget.builder(
-                            Text.literal("del"),
+                            Text.literal("🗑"),
                             btn -> deleteNpc(npc.id())
                     )
-                    .position(rightEdge - 45, npcY)  // ✅ 30px кнопка, прижата к правому краю
-                    .size(30, LIST_ITEM_HEIGHT)
+                    .position(btnX + 25, npcY)
+                    .size(20, LIST_ITEM_HEIGHT)
                     .build();
             addDrawableChild(delBtn);
             listButtons.add(delBtn);
 
-            npcY += LIST_ITEM_HEIGHT;
             displayCount++;
         }
     }
@@ -274,10 +306,9 @@ public class NpcEditorScreen extends Screen {
     }
 
     private void refreshNpcList() {
-        if (System.currentTimeMillis() - lastListRefresh > 1000) {
-            npcList = NpcDataManager.loadNpcs();
-            lastListRefresh = System.currentTimeMillis();
-        }
+        List<NpcEntry> loaded = NpcDataManager.loadNpcs();
+        npcList = (loaded != null) ? loaded : new ArrayList<>();
+        lastListRefresh = System.currentTimeMillis();
     }
 
     private String generateAutoId() {
@@ -303,7 +334,6 @@ public class NpcEditorScreen extends Screen {
                 return;
             }
 
-
             double x = parseDouble(xField.getText(), 0);
             double y = parseDouble(yField.getText(), 64);
             double z = parseDouble(zField.getText(), 0);
@@ -323,11 +353,9 @@ public class NpcEditorScreen extends Screen {
             playClickSound();
 
             init();
-
-            // ... остальной код ...
         } catch (Exception e) {
             sendMessage("§c[Ошибка] " + e.getMessage());
-            e.printStackTrace();  // ✅ Важная строка!
+            e.printStackTrace();
         }
     }
 
@@ -382,15 +410,14 @@ public class NpcEditorScreen extends Screen {
 
     private void clearListButtons() {
         for (ButtonWidget btn : listButtons) {
-            remove(btn);  // Убираем виджет с экрана
+            remove(btn);
         }
-        listButtons.clear();  // Очищаем список
+        listButtons.clear();
     }
 
     private double parseDouble(String text, double defaultValue) {
         try {
             if (text.isEmpty()) return defaultValue;
-            // ✅ Заменяем запятую на точку
             return Double.parseDouble(text.replace(',', '.'));
         } catch (Exception e) {
             return defaultValue;
@@ -400,7 +427,6 @@ public class NpcEditorScreen extends Screen {
     private float parseFloat(String text, float defaultValue) {
         try {
             if (text.isEmpty()) return defaultValue;
-            // ✅ Заменяем запятую на точку
             return Float.parseFloat(text.replace(',', '.'));
         } catch (Exception e) {
             return defaultValue;
@@ -420,14 +446,18 @@ public class NpcEditorScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-
         // Заголовок формы
         String formTitle = editingEntry != null ? "✏️ Редактирование" : "➕ Создание НПС";
         context.drawText(textRenderer, formTitle, formX, formY - 12, 0xFFFFFF, true);
 
         // Заголовок списка
-        int listY = formY + gap * 3 + 40;  // ✅ ОДИН РАЗ определяем
+        int listY = formY + gap * 3 + 40;
         context.drawText(textRenderer, "📋 Список НПС", formX, listY, 0xFFFFA0, true);
+
+        // ✅ ПРОВЕРКА: гарантируем, что список не null
+        if (npcList == null) {
+            refreshNpcList();
+        }
 
         // Рисуем список НПС
         if (npcList == null) {
@@ -436,11 +466,31 @@ public class NpcEditorScreen extends Screen {
             context.drawText(textRenderer, "§7Список пуст. Создай первого НПС!", formX + 5, listY + 12, 0x888888, false);
         } else {
             var player = MinecraftClient.getInstance().player;
-            int npcY = listY + 12;  // ✅ ИСПОЛЬЗУЕМ уже определённый listY
-            int displayCount = 0;
+            int baseY = listY + 12;
+            int listBottom = baseY + LIST_VISIBLE_HEIGHT;
 
-            for (int i = 0; i < npcList.size(); i++) {
+            // ✅ Обрезаем всё, что выходит за пределы видимой области
+            context.enableScissor(formX, baseY, width - formX, listBottom);
+
+            int displayCount = 0;
+            int firstVisibleIndex = (int) Math.ceil(listScrollOffset / LIST_ITEM_HEIGHT);
+
+            for (int i = firstVisibleIndex; i < npcList.size(); i++) {
                 NpcEntry npc = npcList.get(i);
+
+                // ✅ ТАКОЙ ЖЕ расчёт как в createListButtons()
+                int npcY = baseY + (i * LIST_ITEM_HEIGHT) - (int) listScrollOffset;
+
+                // Прерываем, если вышли за нижнюю границу
+                if (npcY >= listBottom) {
+                    break;
+                }
+
+                // Пропускаем элементы выше видимой области
+                if (npcY + LIST_ITEM_HEIGHT < baseY) {
+                    displayCount++;
+                    continue;
+                }
 
                 // Фильтр по радиусу
                 if (!showAllNpcs && player != null) {
@@ -450,13 +500,15 @@ public class NpcEditorScreen extends Screen {
                     int radius = mxnder.desertmod.MyConfig.HANDLER.instance().npcRenderRadius;
 
                     if (dist > radius) {
-                        continue;  // Пропускаем вне радиуса
+                        continue; // Не увеличиваем displayCount!
                     }
                 }
 
-                if (displayCount >= MAX_DISPLAY_NPCS) break;
+                // Лимит отображения
+                if (displayCount >= MAX_DISPLAY_NPCS) {
+                    break;
+                }
 
-                // Индикатор
                 String indicator = "○";
                 if (player != null) {
                     Vec3d npcPos = new Vec3d(npc.x(), npc.y(), npc.z());
@@ -476,18 +528,34 @@ public class NpcEditorScreen extends Screen {
                         indicator, npc.id(), npc.typeKey(), npc.animVariant(),
                         npc.x(), npc.y(), npc.z(), npc.yaw());
 
-                // Белый цвет + shadow=true
                 context.drawText(textRenderer, line, formX + 5, npcY + 2, 0xFFFFFFFF, true);
 
-                npcY += LIST_ITEM_HEIGHT;
                 displayCount++;
             }
 
-            // Если НПС больше, чем показали
+            // ✅ Отключаем обрезку
+            context.disableScissor();
+
+            // ✅ Рисуем скроллбар
+            int totalHeight = npcList.size() * LIST_ITEM_HEIGHT;
+            if (totalHeight > LIST_VISIBLE_HEIGHT) {
+                int scrollbarWidth = 6;
+                int scrollbarX = width - formX - scrollbarWidth;
+
+                context.fill(scrollbarX, baseY, scrollbarX + scrollbarWidth, listBottom, 0x40000000);
+
+                float scrollRatio = (float) listScrollOffset / Math.max(1, totalHeight - LIST_VISIBLE_HEIGHT);
+                int thumbHeight = Math.max(20, (int) ((float) LIST_VISIBLE_HEIGHT * LIST_VISIBLE_HEIGHT / totalHeight));
+                int thumbY = baseY + (int) (scrollRatio * (LIST_VISIBLE_HEIGHT - thumbHeight));
+
+                context.fill(scrollbarX, thumbY, scrollbarX + scrollbarWidth, thumbY + thumbHeight, 0xA0888888);
+            }
+
+            // Счётчик
             if (npcList.size() > MAX_DISPLAY_NPCS) {
                 context.drawText(textRenderer,
                         "§7... (показано " + displayCount + " из " + npcList.size() + ")",
-                        formX, npcY + 2, 0x888888, true);
+                        formX, listBottom + 5, 0x888888, true);
             }
         }
 
@@ -499,34 +567,31 @@ public class NpcEditorScreen extends Screen {
         if (super.mouseClicked(mouse, clicked)) {
             return true;
         }
+        return false;
+    }
 
-        if (!clicked || npcList == null) {
-            return false;
-        }
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        System.out.println("[SCROLL] Called | v=" + verticalAmount + " at (" + mouseX + "," + mouseY + ")");
 
-        double mouseX = mouse.x();
-        double mouseY = mouse.y();
+        if (npcList == null || npcList.isEmpty()) return false;
 
-        var player = MinecraftClient.getInstance().player;
         int listY = formY + gap * 3 + 40;
-        int npcY = listY + 12;
-        int displayCount = 0;
+        int listBottom = listY + 12 + LIST_VISIBLE_HEIGHT;
 
-        for (NpcEntry npc : npcList) {
-            // ... фильтр по радиусу ...
-            if (!showAllNpcs && player != null) {
-                Vec3d npcPos = new Vec3d(npc.x(), npc.y(), npc.z());
-                Vec3d playerPos = new Vec3d(player.getX(), player.getY(), player.getZ());
-                double dist = playerPos.distanceTo(npcPos);
-                int radius = mxnder.desertmod.MyConfig.HANDLER.instance().npcRenderRadius;
-                if (dist > radius) continue;
-            }
-            if (displayCount >= MAX_DISPLAY_NPCS) break;
+        System.out.println("[SCROLL] List bounds: Y=" + listY + " to " + listBottom);
 
-            npcY += LIST_ITEM_HEIGHT;
-            displayCount++;
+        if (mouseY >= listY && mouseY <= listBottom && mouseX >= formX && mouseX <= width - formX) {
+            System.out.println("[SCROLL] Inside list! offset: " + listScrollOffset);
+
+            int totalHeight = npcList.size() * LIST_ITEM_HEIGHT;
+            int maxScroll = Math.max(0, totalHeight - LIST_VISIBLE_HEIGHT);
+            listScrollOffset = Math.max(0, Math.min(listScrollOffset - verticalAmount * 15, maxScroll));
+
+            clearListButtons();
+            createListButtons();
+            return true;
         }
-
         return false;
     }
 

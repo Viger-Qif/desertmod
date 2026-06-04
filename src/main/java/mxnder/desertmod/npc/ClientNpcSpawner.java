@@ -102,13 +102,6 @@ public final class ClientNpcSpawner {
             allNpcEntries.clear();
             allNpcEntries.addAll(npcs);
 
-            if (client.player != null) {
-                client.player.sendMessage(
-                        Text.literal("§e[NPC DEBUG] NPC list changed -> refresh"),
-                        false
-                );
-            }
-
             refreshAllNpcs();
             return;
         }
@@ -338,13 +331,6 @@ public final class ClientNpcSpawner {
      */
     public static void refreshAllNpcs() {
         var client = MinecraftClient.getInstance();
-
-        if (client.player != null) {
-            client.player.sendMessage(
-                    Text.literal("§c[NPC DEBUG] refreshAllNpcs()"),
-                    false
-            );
-        }
 
         if (client.world == null || client.player == null) return;
 
