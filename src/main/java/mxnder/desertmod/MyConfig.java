@@ -37,6 +37,8 @@ public class MyConfig {
     public boolean enableNPC = true; // Вкл/выкл всех НПС
     @SerialEntry
     public boolean enableFrameInteraction = true; // Вкл/выкл взаимодействие с рамками
+    @SerialEntry
+    public boolean useXareoRadar = false; // Интеграция с радаром Xaero's Minimap
 
     // Группа 2: Редактор
     @SerialEntry
@@ -83,6 +85,20 @@ public class MyConfig {
                                                 () -> HANDLER.instance().enableFrameInteraction,
                                                 newVal -> {
                                                     HANDLER.instance().enableFrameInteraction = newVal;
+                                                })
+                                        .controller(TickBoxControllerBuilder::create)
+                                        .build())
+
+                                // 3. Интеграция с радаром Xaero's Minimap
+                                .option(Option.<Boolean>createBuilder()
+                                        .name(Text.literal("Используется радар от Xaero's Minimap"))
+                                        .description(OptionDescription.of(Text.literal(
+                                                "Изменение скорости анимаций при использовании Xaero's Minimap\n"
+                                        )))
+                                        .binding(false,
+                                                () -> HANDLER.instance().useXareoRadar,
+                                                newVal -> {
+                                                    HANDLER.instance().useXareoRadar = newVal;
                                                 })
                                         .controller(TickBoxControllerBuilder::create)
                                         .build())

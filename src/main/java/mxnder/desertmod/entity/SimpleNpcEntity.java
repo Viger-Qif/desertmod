@@ -13,10 +13,14 @@ import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.animation.object.PlayState;
 import software.bernie.geckolib.animation.state.AnimationTest;
 import software.bernie.geckolib.util.GeckoLibUtil;
+import mxnder.desertmod.MyConfig;
 
 public class SimpleNpcEntity extends PathAwareEntity implements GeoEntity {
 
     private String animVariant = "idle_hair";
+
+    private RawAnimation lastAnim = null;
+    private int lastTick = -1;
 
     public void setAnimVariant(String variant) {
         this.animVariant = variant;
@@ -36,7 +40,6 @@ public class SimpleNpcEntity extends PathAwareEntity implements GeoEntity {
     public void registerControllers(final AnimatableManager.ControllerRegistrar controllers) {
         AnimationController<SimpleNpcEntity> controller = new AnimationController<SimpleNpcEntity>(
                 "idle", 0, this::idleAnimController);
-        controller.setAnimationSpeed(1.0); // Явная установка скорости анимации
         controllers.add(controller);
     }
 
@@ -47,25 +50,45 @@ public class SimpleNpcEntity extends PathAwareEntity implements GeoEntity {
     private static final RawAnimation SIT_1 = RawAnimation.begin().thenLoop("sit_1");
 
     private PlayState idleAnimController(AnimationTest<SimpleNpcEntity> controller) {
-        switch (animVariant)
-        {
-            case "idle_hair":
-                controller.setAndContinue(IDLE_HAIR);
-                break;
+
+        // защита от лишних вызовов в один тик
+        if (this.age == lastTick) {
+            return PlayState.CONTINUE;
+        }
+        lastTick = this.age;
+
+        // === НОВОЕ: замедление анимации если включена интеграция с радаром ===
+        if (MyConfig.HANDLER.instance().useXareoRadar) {
+            controller.setControllerSpeed(0.15f);
+        } else {
+            controller.setControllerSpeed(1.0f); // сброс к нормальной скорости
+        }
+        // ===================================================================
+
+        RawAnimation targetAnim;
+
+        switch (animVariant) {
             case "idle_hat":
-                controller.setAndContinue(IDLE_HAT);
+                targetAnim = IDLE_HAT;
                 break;
             case "lean_1_hair":
-                controller.setAndContinue(LEAN_1_HAIR);
+                targetAnim = LEAN_1_HAIR;
                 break;
             case "talk_hair":
-                controller.setAndContinue(TALK_HAIR);
+                targetAnim = TALK_HAIR;
                 break;
             case "sit_1":
-                controller.setAndContinue(SIT_1);
+                targetAnim = SIT_1;
                 break;
             default:
-                controller.setAndContinue(IDLE_HAIR);
+                targetAnim = IDLE_HAIR;
+                break;
+        }
+
+        // ключевой фикс: не дергаем GeckoLib лишний раз
+        if (!controller.isCurrentAnimation(targetAnim)) {
+            controller.setAnimation(targetAnim);
+            lastAnim = targetAnim;
         }
 
         return PlayState.CONTINUE;

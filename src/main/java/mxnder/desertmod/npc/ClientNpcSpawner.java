@@ -10,6 +10,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.text.Text;
 import org.jspecify.annotations.Nullable;
 import java.util.Objects;
 
@@ -100,6 +101,14 @@ public final class ClientNpcSpawner {
         if (npcListChanged) {
             allNpcEntries.clear();
             allNpcEntries.addAll(npcs);
+
+            if (client.player != null) {
+                client.player.sendMessage(
+                        Text.literal("§e[NPC DEBUG] NPC list changed -> refresh"),
+                        false
+                );
+            }
+
             refreshAllNpcs();
             return;
         }
@@ -311,6 +320,14 @@ public final class ClientNpcSpawner {
      */
     public static void refreshAllNpcs() {
         var client = MinecraftClient.getInstance();
+
+        if (client.player != null) {
+            client.player.sendMessage(
+                    Text.literal("§c[NPC DEBUG] refreshAllNpcs()"),
+                    false
+            );
+        }
+
         if (client.world == null || client.player == null) return;
 
         ClientWorld world = client.world;

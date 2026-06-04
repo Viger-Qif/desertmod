@@ -1,5 +1,6 @@
 package mxnder.desertmod.entity;
 
+import mxnder.desertmod.MyConfig;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
@@ -70,7 +71,6 @@ public class ExampleNpcEntity extends PathAwareEntity implements GeoEntity {
                 .setSoundKeyframeHandler(event -> {
                     spawnChopParticles();
                 });
-        controller.setAnimationSpeed(1.0); // Явная установка скорости анимации
         controllers.add(controller);
     }
 
@@ -78,6 +78,15 @@ public class ExampleNpcEntity extends PathAwareEntity implements GeoEntity {
 
 
     private PlayState idleAnimController(AnimationTest<ExampleNpcEntity> controller) {
+
+        // === НОВОЕ: замедление анимации если включена интеграция с радаром ===
+        if (MyConfig.HANDLER.instance().useXareoRadar) {
+            controller.setControllerSpeed(0.15f);
+        } else {
+            controller.setControllerSpeed(1.0f); // сброс к нормальной скорости
+        }
+        // ===================================================================
+
         controller.setAndContinue(IDLE_ANIM);
         return PlayState.CONTINUE;
     }
