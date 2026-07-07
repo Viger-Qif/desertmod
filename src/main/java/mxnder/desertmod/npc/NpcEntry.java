@@ -1,5 +1,7 @@
 package mxnder.desertmod.npc;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import mxnder.desertmod.ModEntities;
@@ -8,6 +10,7 @@ import mxnder.desertmod.ModEntities;
  * Данные для клиентского NPC (для редактора и JSON сохранения).
  * Содержит всю информацию необходимую для спавна и отображения NPC.
  */
+@Environment(EnvType.CLIENT)
 public record NpcEntry(
         String id,
         String typeKey,

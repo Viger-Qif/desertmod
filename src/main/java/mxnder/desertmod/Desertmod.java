@@ -16,8 +16,8 @@ public class Desertmod implements ModInitializer {
 	public void onInitialize() {
 
 		LOGGER.info("Hello, it`s desertmod!");
-		// Регистрация сущностей и их атрибутов (даже в клиентском моде это нужно для рендера).
 		ModEntities.registerEntities();
+		// Регистрация сущностей и их атрибутов (даже в клиентском моде это нужно для рендера).
 		FabricDefaultAttributeRegistry.register(ModEntities.EXAMPLE_NPC, ExampleNpcEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(ModEntities.SIMPLE_NPC, SimpleNpcEntity.createAttributes());
 	}

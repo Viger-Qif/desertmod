@@ -3,6 +3,8 @@ package mxnder.desertmod.npc;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import java.nio.file.*;
 import java.io.*;
@@ -19,6 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Файл хранится в конфиге мода: config/desertmod_npcs.json
  * Формат JSON с отступами для удобного ручного редактирования.
  */
+@Environment(EnvType.CLIENT)
 public class NpcDataManager {
 
     // Путь к файлу сохранения NPC
